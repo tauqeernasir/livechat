@@ -76,8 +76,7 @@ class KnowledgeService:
                 for i, (chunk_text, vector) in enumerate(zip(chunks_text, embeddings))
             ]
             
-            for db_chunk in db_chunks:
-                session.add(db_chunk)
+            session.add_all(db_chunks)
             
             source.status = SourceStatus.COMPLETED
             session.add(source)
