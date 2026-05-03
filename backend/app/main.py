@@ -23,6 +23,7 @@ from asgi_correlation_id import CorrelationIdMiddleware
 
 from app.api.v1.api import api_router
 from app.api.v1.chatbot import agent
+from app.models import *  # noqa: F401, F403
 from app.core.cache import cache_service
 from app.core.config import settings
 from app.core.limiter import limiter

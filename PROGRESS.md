@@ -11,8 +11,9 @@
 - [x] Phase 3: Onboarding Flow (Multi-step Wizard)
 
 ## Module 2: Knowledge Base & Training
-- [ ] Data Ingestion (File Upload, Text Editor, Scraper)
-- [ ] Vector Store Integration (Postgres + pgvector)
+- [x] Foundation & Models (Backend dependencies, SQLModels, pgvector migrations)
+- [ ] Data Ingestion (File Upload, Text Editor)
+- [ ] Background Processing Pipeline (S3, Extraction, Chunking, Embedding)
 - [ ] Guardrails & Persona Editor
 
 ## Module 3: Internal Testing Interface
@@ -38,3 +39,6 @@
 - Added server default to `onboarding_completed` column in migration to handle existing data.
 - Refactored `DatabaseService` to support `AsyncSession` using `postgresql+psycopg`.
 - Refactored `OnboardingService` to use Dependency Injection and robust transaction handling.
+- Installed `arq`, `pypdf`, `python-docx`, `langchain-text-splitters`, `sentence-transformers`, and `pgvector`.
+- Configured Alembic with `pgvector` and `uv run ruff` post-write hooks.
+- Successfully migrated `KnowledgeSource`, `DocumentChunk` (with vector support), and `AgentConfiguration` models.

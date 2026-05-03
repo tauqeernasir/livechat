@@ -16,6 +16,8 @@ from app.models.thread import Thread  # noqa: F401
 from app.models.user import User  # noqa: F401
 from app.models.organization import Organization  # noqa: F401
 from app.models.workspace import Workspace  # noqa: F401
+from app.models.knowledge import KnowledgeSource, DocumentChunk  # noqa: F401
+from app.models.agent_config import AgentConfiguration  # noqa: F401
 
 # Alembic Config object
 config = context.config

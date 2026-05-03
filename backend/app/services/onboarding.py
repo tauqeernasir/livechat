@@ -5,9 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 from fastapi import HTTPException, status
-from app.models.organization import Organization
-from app.models.workspace import Workspace
-from app.models.user import User
+from app.models import Organization, Workspace, User
 from app.schemas.onboarding import OrganizationCreate, WorkspaceCreate
 from app.core.logging import logger
 
