@@ -4,6 +4,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
+import KnowledgeBase from './pages/KnowledgeBase';
+import AgentConfig from './pages/AgentConfig';
 
 function LoadingSpinner() {
   return (
@@ -99,6 +101,32 @@ export default function App() {
           <ProtectedRoute>
             {user?.onboarding_completed ? (
               <Dashboard />
+            ) : (
+              <Navigate to="/onboarding" replace />
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/knowledge"
+        element={
+          <ProtectedRoute>
+            {user?.onboarding_completed ? (
+              <KnowledgeBase />
+            ) : (
+              <Navigate to="/onboarding" replace />
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings/agent"
+        element={
+          <ProtectedRoute>
+            {user?.onboarding_completed ? (
+              <AgentConfig />
             ) : (
               <Navigate to="/onboarding" replace />
             )}

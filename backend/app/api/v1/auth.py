@@ -18,6 +18,8 @@ from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 
 from app.core.config import settings
 from app.core.limiter import limiter
@@ -25,6 +27,7 @@ from app.core.logging import (
     bind_context,
     logger,
 )
+from app.models import Workspace
 from app.models.session import Session
 from app.models.user import User
 from app.schemas.auth import (
@@ -33,7 +36,7 @@ from app.schemas.auth import (
     UserCreate,
     UserResponse,
 )
-from app.services.database import DatabaseService
+from app.services.database import DatabaseService, database_service
 from app.utils.auth import (
     create_access_token,
     verify_token,
@@ -268,21 +271,37 @@ async def login(
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(user: User = Depends(get_current_user)):
+async def get_me(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(database_service.get_async_session),
+):
     """Get the current authenticated user's information.
 
     Args:
         user: The authenticated user from the token.
+        session: Database session.
 
     Returns:
         UserResponse: The user's profile information.
     """
     logger.info("get_me_called", user_id=user.id)
+    
+    workspace_id = None
+    if user.organization_id:
+        result = await session.execute(
+            select(Workspace.id).where(Workspace.org_id == user.organization_id).limit(1)
+        )
+        workspace_row = result.first()
+        if workspace_row:
+            workspace_id = workspace_row[0]
+
     return UserResponse(
         id=user.id,
         email=user.email,
         username=user.username,
         onboarding_completed=user.onboarding_completed,
+        organization_id=user.organization_id,
+        workspace_id=workspace_id,
     )
 
 

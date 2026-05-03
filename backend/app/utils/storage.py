@@ -56,5 +56,22 @@ class StorageService:
             logger.exception("s3_upload_failed", error=str(e), path=file_path)
             return None
 
+    async def get_file(self, file_key: str) -> Optional[bytes]:
+        """Download a file from S3."""
+        try:
+            async with self.session.create_client(
+                's3',
+                region_name=self.region,
+                endpoint_url=self.endpoint_url,
+                aws_access_key_id=self.access_key,
+                aws_secret_access_key=self.secret_key
+            ) as s3:
+                response = await s3.get_object(Bucket=self.bucket_name, Key=file_key)
+                async with response['Body'] as stream:
+                    return await stream.read()
+        except Exception as e:
+            logger.exception("s3_download_failed", error=str(e), key=file_key)
+            return None
 
-storage_service = StorageService()
+
+storage_utils = StorageService()

@@ -12,9 +12,10 @@
 
 ## Module 2: Knowledge Base & Training
 - [x] Foundation & Models (Backend dependencies, SQLModels, pgvector migrations)
-- [ ] Data Ingestion (File Upload, Text Editor)
-- [ ] Background Processing Pipeline (S3, Extraction, Chunking, Embedding)
-- [ ] Guardrails & Persona Editor
+- [x] Data Ingestion (File Upload, TipTap Manual Entry)
+- [x] Background Processing Pipeline (arq, Extraction Registry, Recursive Chunking)
+- [x] Vector Storage (Embeddings with sentence-transformers, pgvector)
+- [x] Guardrails & Persona Editor (AgentConfig API & UI)
 
 ## Module 3: Internal Testing Interface
 - [ ] Playground UI
@@ -42,3 +43,7 @@
 - Installed `arq`, `pypdf`, `python-docx`, `langchain-text-splitters`, `sentence-transformers`, and `pgvector`.
 - Configured Alembic with `pgvector` and `uv run ruff` post-write hooks.
 - Successfully migrated `KnowledgeSource`, `DocumentChunk` (with vector support), and `AgentConfiguration` models.
+- Implemented `KnowledgeService` with strategy-based extraction and chunking.
+- Set up background worker with `arq` and corrected `RedisSettings` connectivity.
+- Created reusable premium `Layout` and `Editor` (TipTap) components in React.
+- Added Knowledge Base and Agent Training dashboards with real-time status polling.

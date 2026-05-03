@@ -6,6 +6,8 @@ interface User {
   email: string;
   username: string | null;
   onboarding_completed: boolean;
+  organization_id: number | null;
+  workspace_id: number | null;
 }
 
 interface AuthContextType {

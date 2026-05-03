@@ -104,6 +104,8 @@ class UserResponse(BaseResponse):
     email: str = Field(..., description="User's email address")
     username: str | None = Field(default=None, description="Optional display name")
     onboarding_completed: bool = Field(default=False, description="Whether onboarding is completed")
+    organization_id: int | None = Field(default=None, description="User's organization ID")
+    workspace_id: int | None = Field(default=None, description="User's current workspace ID")
     token: Token | None = Field(default=None, description="Authentication token")
 
 
