@@ -1,6 +1,7 @@
 """Knowledge base API endpoints."""
 
 import os
+import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,8 +26,9 @@ async def upload_knowledge_file(
     session: AsyncSession = Depends(database_service.get_async_session),
 ):
     """Upload a file to the knowledge base and trigger processing."""
-    # 1. Validation
-    extension = os.path.splitext(file.filename)[1].lower()
+    # 1. Validation and Sanitization
+    original_filename = os.path.basename(file.filename)
+    extension = os.path.splitext(original_filename)[1].lower()
     if extension not in [".pdf", ".docx", ".txt"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -36,14 +38,16 @@ async def upload_knowledge_file(
     # 2. Save to S3
     try:
         content = await file.read()
-        file_key = f"workspaces/{workspace_id}/knowledge/{file.filename}"
+        # Use UUID for storage key to prevent injection and collisions
+        unique_id = uuid.uuid4()
+        file_key = f"workspaces/{workspace_id}/knowledge/{unique_id}{extension}"
         await storage_utils.upload_file(content, file_key)
         
         # 3. Create database entry
         source = KnowledgeSource(
             workspace_id=workspace_id,
             source_type=SourceType.FILE,
-            name=file.filename,
+            name=original_filename,
             file_key=file_key,
             status=SourceStatus.PENDING
         )
@@ -54,7 +58,7 @@ async def upload_knowledge_file(
         # 4. Trigger background task
         await task_queue_service.enqueue_knowledge_processing(source.id)
         
-        logger.info("knowledge_upload_success", source_id=source.id, filename=file.filename)
+        logger.info("knowledge_upload_success", source_id=source.id, filename=original_filename)
         return {"source_id": source.id, "status": source.status}
         
     except Exception as e:
