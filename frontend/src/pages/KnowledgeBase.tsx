@@ -59,22 +59,30 @@ export default function KnowledgeBase() {
     }
   }, [user?.workspace_id]);
 
+  // Use a ref to always have the latest sources in the interval without re-running the effect
+  const sourcesRef = useRef(sources);
+  useEffect(() => {
+    sourcesRef.current = sources;
+  }, [sources]);
+
   useEffect(() => {
     if (!user?.workspace_id) return;
 
     // Initial fetch
     fetchSources();
 
-    // Setup polling only if needed
+    // Setup polling interval that stays stable
     const pollInterval = setInterval(() => {
-      const activeJobs = sources.filter(s => s.status === 'pending' || s.status === 'processing');
-      if (activeJobs.length > 0) {
+      const hasActiveJobs = sourcesRef.current.some(
+        s => s.status === 'pending' || s.status === 'processing'
+      );
+      if (hasActiveJobs) {
         fetchSources();
       }
-    }, 5000); // Increased to 5s for better performance
+    }, 5000);
 
     return () => clearInterval(pollInterval);
-  }, [user?.workspace_id, fetchSources, sources.length]); // Only re-run if workspace changes or count of items changes
+  }, [user?.workspace_id, fetchSources]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
