@@ -23,3 +23,9 @@ frontend/.env.production.local
 # OS
 .DS_Store
 Thumbs.db
+
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+
+.env

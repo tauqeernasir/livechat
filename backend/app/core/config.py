@@ -227,6 +227,13 @@ class Settings:
         self.EVALUATION_API_KEY = os.getenv("EVALUATION_API_KEY", self.OPENAI_API_KEY)
         self.EVALUATION_SLEEP_TIME = int(os.getenv("EVALUATION_SLEEP_TIME", "10"))
 
+        # S3 / Storage Configuration
+        self.S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL", "http://localhost:9000")
+        self.S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", "minioadmin")
+        self.S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "minioadmin")
+        self.S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME", "lagent-assets")
+        self.S3_REGION = os.getenv("S3_REGION", "us-east-1")
+
         # Apply environment-specific settings
         self.apply_environment_settings()
 

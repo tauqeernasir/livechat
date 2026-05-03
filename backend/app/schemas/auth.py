@@ -103,7 +103,8 @@ class UserResponse(BaseResponse):
     id: int = Field(..., description="User's ID")
     email: str = Field(..., description="User's email address")
     username: str | None = Field(default=None, description="Optional display name")
-    token: Token = Field(..., description="Authentication token")
+    onboarding_completed: bool = Field(default=False, description="Whether onboarding is completed")
+    token: Token | None = Field(default=None, description="Authentication token")
 
 
 class SessionResponse(BaseResponse):

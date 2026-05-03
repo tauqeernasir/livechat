@@ -13,6 +13,8 @@ from sqlmodel import (
     create_engine,
     select,
 )
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 
 from app.core.config import (
     Environment,
@@ -51,6 +53,25 @@ class DatabaseService:
                 max_overflow=max_overflow,
                 pool_timeout=30,  # Connection timeout (seconds)
                 pool_recycle=1800,  # Recycle connections after 30 minutes
+            )
+
+            # Create async engine
+            async_connection_url = (
+                f"postgresql+psycopg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}"
+                f"@{settings.POSTGRES_HOST}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
+            )
+
+            self.async_engine = create_async_engine(
+                async_connection_url,
+                pool_pre_ping=True,
+                pool_size=pool_size,
+                max_overflow=max_overflow,
+                pool_timeout=30,
+                pool_recycle=1800,
+            )
+
+            self.async_session_maker = sessionmaker(
+                self.async_engine, class_=AsyncSession, expire_on_commit=False
             )
 
             logger.info(
@@ -238,13 +259,22 @@ class DatabaseService:
             bool: True if database is healthy, False otherwise
         """
         try:
-            with Session(self.engine) as session:
+            async with self.async_session_maker() as session:
                 # Execute a simple query to check connection
-                session.exec(select(1)).first()
+                await session.execute(select(1))
                 return True
         except Exception as e:
             logger.error("database_health_check_failed", error=str(e))
             return False
+
+    async def get_async_session(self) -> AsyncSession:
+        """Get an async database session.
+
+        Yields:
+            AsyncSession: An async SQLModel/SQLAlchemy session
+        """
+        async with self.async_session_maker() as session:
+            yield session
 
 
 # Create a singleton instance

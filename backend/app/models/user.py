@@ -16,6 +16,7 @@ from app.models.base import BaseModel
 
 if TYPE_CHECKING:
     from app.models.session import Session
+    from app.models.organization import Organization
 
 
 class User(BaseModel, table=True):
@@ -26,15 +27,22 @@ class User(BaseModel, table=True):
         email: User's email (unique)
         hashed_password: Bcrypt hashed password
         username: Optional display name for the user
+        organization_id: Link to organization
+        onboarding_completed: Whether the user finished onboarding
         created_at: When the user was created
         sessions: Relationship to user's chat sessions
+        organization: Relationship to user's organization
     """
 
     id: int = Field(default=None, primary_key=True)
     email: str = Field(unique=True, index=True)
     hashed_password: str
     username: Optional[str] = Field(default=None, index=False)
+    organization_id: Optional[int] = Field(default=None, foreign_key="organization.id", unique=True)
+    onboarding_completed: bool = Field(default=False)
+
     sessions: List["Session"] = Relationship(back_populates="user")
+    organization: Optional["Organization"] = Relationship(back_populates="users")
 
     def verify_password(self, password: str) -> bool:
         """Verify if the provided password matches the hash."""

@@ -37,9 +37,14 @@ from app.core.observability import langfuse_init
 from app.services.database import database_service
 from app.services.memory import memory_service
 
+import tracemalloc
+
 # Load environment variables
 load_dotenv()
 langfuse_init()
+
+if settings.DEBUG:
+    tracemalloc.start()
 
 
 @asynccontextmanager

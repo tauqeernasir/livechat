@@ -267,6 +267,25 @@ async def login(
         raise HTTPException(status_code=422, detail=str(ve))
 
 
+@router.get("/me", response_model=UserResponse)
+async def get_me(user: User = Depends(get_current_user)):
+    """Get the current authenticated user's information.
+
+    Args:
+        user: The authenticated user from the token.
+
+    Returns:
+        UserResponse: The user's profile information.
+    """
+    logger.info("get_me_called", user_id=user.id)
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        username=user.username,
+        onboarding_completed=user.onboarding_completed,
+    )
+
+
 @router.post("/session", response_model=SessionResponse)
 async def create_session(user: User = Depends(get_current_user)):
     """Create a new chat session for the authenticated user.
