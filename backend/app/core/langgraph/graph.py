@@ -24,6 +24,10 @@ from langgraph.graph.state import (
     Command,
     CompiledStateGraph,
 )
+from sqlmodel import (
+    select,
+    Session as SQLModelSession,
+)
 from langgraph.types import (
     RunnableConfig,
     StateSnapshot,
@@ -43,6 +47,7 @@ from app.schemas import (
     GraphState,
     Message,
 )
+from app.services.database import database_service
 from app.services.llm import llm_service
 from app.services.memory import memory_service
 from app.utils import (
@@ -130,8 +135,33 @@ class LangGraphAgent:
             else settings.DEFAULT_LLM_MODEL
         )
 
-        username = config.get("metadata", {}).get("username")
-        SYSTEM_PROMPT = load_system_prompt(username=username, long_term_memory=state.long_term_memory)
+        metadata = config.get("metadata", {})
+        username = metadata.get("username")
+        workspace_id = metadata.get("workspace_id")
+
+        # Load agent configuration for this workspace
+        persona = None
+        fallback_rule = None
+        if workspace_id:
+            try:
+                from app.models.agent_config import AgentConfiguration
+                async with database_service.async_session_maker() as db_session:
+                    statement = select(AgentConfiguration).where(AgentConfiguration.workspace_id == int(workspace_id))
+                    result = await db_session.execute(statement)
+                    agent_config = result.scalar_one_or_none()
+                    if agent_config:
+                        import re
+                        persona = re.sub(r"<[^>]*>", "", agent_config.persona) if agent_config.persona else None
+                        fallback_rule = agent_config.fallback_rule
+            except Exception as e:
+                logger.error("failed_to_load_agent_config", workspace_id=workspace_id, error=str(e))
+
+        SYSTEM_PROMPT = load_system_prompt(
+            username=username, 
+            long_term_memory=state.long_term_memory,
+            persona=persona,
+            fallback_rule=fallback_rule
+        )
 
         # Prepare messages with system prompt
         messages = prepare_messages(state.messages, SYSTEM_PROMPT)
@@ -244,6 +274,7 @@ class LangGraphAgent:
         self,
         messages: list[Message],
         session_id: str,
+        workspace_id: int,
         user_id: Optional[str] = None,
         username: Optional[str] = None,
     ) -> list[dict]:
@@ -268,6 +299,7 @@ class LangGraphAgent:
                 "user_id": user_id,
                 "username": username,
                 "session_id": session_id,
+                "workspace_id": workspace_id,
                 "environment": settings.ENVIRONMENT.value,
                 "debug": settings.DEBUG,
             },
@@ -317,6 +349,7 @@ class LangGraphAgent:
         self,
         messages: list[Message],
         session_id: str,
+        workspace_id: int,
         user_id: Optional[str] = None,
         username: Optional[str] = None,
     ) -> AsyncGenerator[str, None]:
@@ -339,6 +372,7 @@ class LangGraphAgent:
                 "user_id": user_id,
                 "username": username,
                 "session_id": session_id,
+                "workspace_id": workspace_id,
                 "environment": settings.ENVIRONMENT.value,
                 "debug": settings.DEBUG,
             },

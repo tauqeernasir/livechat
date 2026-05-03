@@ -306,21 +306,40 @@ async def get_me(
 
 
 @router.post("/session", response_model=SessionResponse)
-async def create_session(user: User = Depends(get_current_user)):
+async def create_session(
+    user: User = Depends(get_current_user), session_db: AsyncSession = Depends(database_service.get_async_session)
+):
     """Create a new chat session for the authenticated user.
 
     Args:
         user: The authenticated user
+        session_db: Database session
 
     Returns:
         SessionResponse: The session ID, name, and access token
     """
     try:
+        # Resolve workspace_id from user's organization
+        workspace_id = None
+        if user.organization_id:
+            result = await session_db.execute(
+                select(Workspace.id).where(Workspace.org_id == user.organization_id).limit(1)
+            )
+            workspace_row = result.first()
+            if workspace_row:
+                workspace_id = workspace_row[0]
+
+        if not workspace_id:
+            logger.error("workspace_not_found_for_session", user_id=user.id)
+            raise HTTPException(status_code=400, detail="User must belong to an organization with a workspace")
+
         # Generate a unique session ID
         session_id = str(uuid.uuid4())
 
         # Create session in database, copying username for LLM personalization
-        session = await db_service.create_session(session_id, user.id, username=user.username)
+        session = await db_service.create_session(
+            session_id, user.id, workspace_id=workspace_id, username=user.username
+        )
 
         # Create access token for the session
         token = create_access_token(session_id, token_type="session")
@@ -329,14 +348,17 @@ async def create_session(user: User = Depends(get_current_user)):
             "session_created",
             session_id=session_id,
             user_id=user.id,
+            workspace_id=workspace_id,
             name=session.name,
             expires_at=token.expires_at.isoformat(),
         )
 
         return SessionResponse(session_id=session_id, name=session.name, token=token)
-    except ValueError as ve:
-        logger.exception("session_creation_validation_failed", error=str(ve), user_id=user.id)
-        raise HTTPException(status_code=422, detail=str(ve))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("session_creation_failed", error=str(e), user_id=user.id)
+        raise HTTPException(status_code=500, detail="Failed to create session")
 
 
 @router.patch("/session/{session_id}/name", response_model=SessionResponse)

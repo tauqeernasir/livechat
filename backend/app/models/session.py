@@ -15,6 +15,7 @@ from app.models.base import BaseModel
 
 if TYPE_CHECKING:
     from app.models.user import User
+    from app.models.workspace import Workspace
 
 
 class Session(BaseModel, table=True):
@@ -32,6 +33,9 @@ class Session(BaseModel, table=True):
 
     id: str = Field(primary_key=True)
     user_id: int = Field(foreign_key="user.id")
+    workspace_id: int = Field(foreign_key="workspace.id", index=True)
     name: str = Field(default="")
     username: Optional[str] = Field(default=None)
+
     user: "User" = Relationship(back_populates="sessions")
+    workspace: "Workspace" = Relationship(back_populates="sessions")

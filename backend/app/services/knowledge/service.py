@@ -3,6 +3,7 @@
 import os
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 from app.models.knowledge import KnowledgeSource, DocumentChunk, SourceStatus, SourceType
 from app.services.knowledge.strategies.extraction import ExtractionRegistry
 from app.services.knowledge.strategies.chunking import RecursiveChunker
@@ -91,6 +92,57 @@ class KnowledgeService:
             source.error_message = str(e)
             session.add(source)
             await session.commit()
+
+    async def retrieve_relevant_chunks(
+        self, session: AsyncSession, workspace_id: int, query: str, k: int = 4
+    ) -> List[dict]:
+        """Search for relevant chunks using vector similarity.
+        
+        Args:
+            session: Async database session
+            workspace_id: The ID of the workspace to search in
+            query: User's natural language question
+            k: Number of chunks to retrieve
+            
+        Returns:
+            List[dict]: List of chunks with text and source metadata
+        """
+        try:
+            # 1. Embed the query
+            query_vectors = await self.embedding_service.embed_batch([query])
+            query_vector = query_vectors[0]
+
+            # 2. Similarity search with workspace scoping
+            # We join with KnowledgeSource to ensure we only get chunks from the right workspace
+            statement = (
+                select(DocumentChunk, KnowledgeSource.name)
+                .join(KnowledgeSource)
+                .where(KnowledgeSource.workspace_id == workspace_id)
+                .order_by(DocumentChunk.vector.cosine_distance(query_vector))
+                .limit(k)
+            )
+            
+            result = await session.execute(statement)
+            rows = result.all()
+            
+            logger.info(
+                "knowledge_retrieval_success", 
+                workspace_id=workspace_id, 
+                query=query, 
+                chunks_found=len(rows)
+            )
+            
+            return [
+                {
+                    "text": chunk.text,
+                    "source": source_name,
+                    "metadata": chunk.chunk_metadata
+                }
+                for chunk, source_name in rows
+            ]
+        except Exception as e:
+            logger.exception("knowledge_retrieval_failed", workspace_id=workspace_id, error=str(e))
+            return []
 
 
 knowledge_service = KnowledgeService()

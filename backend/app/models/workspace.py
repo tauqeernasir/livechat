@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from app.models.organization import Organization
     from app.models.knowledge import KnowledgeSource
     from app.models.agent_config import AgentConfiguration
+    from app.models.session import Session
 
 
 class Workspace(BaseModel, table=True):
@@ -39,4 +40,8 @@ class Workspace(BaseModel, table=True):
     agent_config: Optional["AgentConfiguration"] = Relationship(
         back_populates="workspace",
         sa_relationship_kwargs={"uselist": False, "cascade": "all, delete-orphan"}
+    )
+    sessions: list["Session"] = Relationship(
+        back_populates="workspace",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
