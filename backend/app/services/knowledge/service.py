@@ -59,7 +59,7 @@ class KnowledgeService:
             chunks_text = self.chunker.chunk(text)
             
             # 3. Embedding (Batch)
-            embeddings = self.embedding_service.embed_batch(chunks_text)
+            embeddings = await self.embedding_service.embed_batch(chunks_text)
             
             # 4. Storage
             # Clear existing chunks if any (re-processing)

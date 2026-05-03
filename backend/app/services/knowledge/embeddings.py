@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from sentence_transformers import SentenceTransformer
+from starlette.concurrency import run_in_threadpool
 from app.core.config import settings
 
 
@@ -10,12 +11,12 @@ class BaseEmbeddingService(ABC):
     """Abstract base class for embedding generation."""
 
     @abstractmethod
-    def embed_text(self, text: str) -> List[float]:
+    async def embed_text(self, text: str) -> List[float]:
         """Generate embedding for a single text string."""
         pass
 
     @abstractmethod
-    def embed_batch(self, texts: List[str]) -> List[List[float]]:
+    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for a list of text strings."""
         pass
 
@@ -30,14 +31,14 @@ class SentenceTransformerEmbeddingService(BaseEmbeddingService):
         """
         self.model = SentenceTransformer(model_name)
 
-    def embed_text(self, text: str) -> List[float]:
+    async def embed_text(self, text: str) -> List[float]:
         """Generate embedding for text."""
-        embedding = self.model.encode(text)
+        embedding = await run_in_threadpool(self.model.encode, text)
         return embedding.tolist()
 
-    def embed_batch(self, texts: List[str]) -> List[List[float]]:
+    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for a batch of texts."""
-        embeddings = self.model.encode(texts)
+        embeddings = await run_in_threadpool(self.model.encode, texts)
         return embeddings.tolist()
 
 
