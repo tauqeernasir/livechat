@@ -23,49 +23,50 @@ class LLMRegistry:
     methods to retrieve them by name with optional argument overrides.
     """
 
+    # TODO: let's keep only 1 LLM for now - will uncomment once done development
     LLMS: List[Dict[str, Any]] = [
         {
-            "name": "gpt-5-mini",
+            "name": settings.DEFAULT_LLM_MODEL,
             "llm": ChatOpenAI(
-                model="gpt-5-mini",
-                # api_key=settings.OPENAI_API_KEY,
-                max_tokens=settings.MAX_TOKENS,
-                reasoning={"effort": "low"},
-                base_url=settings.LLM_BASE_URL
-            ),
-        },
-        {
-            "name": "gpt-5.4",
-            "llm": ChatOpenAI(
-                model="gpt-5",
+                model=settings.DEFAULT_LLM_MODEL,
                 api_key=settings.OPENAI_API_KEY,
                 max_tokens=settings.MAX_TOKENS,
-                reasoning={"effort": "medium"},
+                reasoning={"effort": "high"},
                 base_url=settings.LLM_BASE_URL
             ),
         },
-        {
-            "name": "gpt-5.4-nano",
-            "llm": ChatOpenAI(
-                model="gpt-5.4-nano",
-                api_key=settings.OPENAI_API_KEY,
-                max_tokens=settings.MAX_TOKENS,
-                reasoning={"effort": "low"},
-                base_url=settings.LLM_BASE_URL
-            ),
-        },
-        {
-            "name": "gpt-5",
-            "llm": ChatOpenAI(
-                model="gpt-5",
-                api_key=settings.OPENAI_API_KEY,
-                max_tokens=settings.MAX_TOKENS,
-                top_p=0.95 if settings.ENVIRONMENT == Environment.PRODUCTION else 0.8,
-                presence_penalty=0.1 if settings.ENVIRONMENT == Environment.PRODUCTION else 0.0,
-                frequency_penalty=0.1 if settings.ENVIRONMENT == Environment.PRODUCTION else 0.0,
-                base_url=settings.LLM_BASE_URL
-            ),
-        },
+        # {
+        #     "name": "gpt-5.4",
+        #     "llm": ChatOpenAI(
+        #         model="gpt-5",
+        #         api_key=settings.OPENAI_API_KEY,
+        #         max_tokens=settings.MAX_TOKENS,
+        #         reasoning={"effort": "medium"},
+        #         base_url=settings.LLM_BASE_URL
+        #     ),
+        # },
+        # {
+        #     "name": "gpt-5.4-nano",
+        #     "llm": ChatOpenAI(
+        #         model="gpt-5.4-nano",
+        #         api_key=settings.OPENAI_API_KEY,
+        #         max_tokens=settings.MAX_TOKENS,
+        #         reasoning={"effort": "low"},
+        #         base_url=settings.LLM_BASE_URL
+        #     ),
+        # },
+        # {
+        #     "name": "gpt-5",
+        #     "llm": ChatOpenAI(
+        #         model="gpt-5",
+        #         api_key=settings.OPENAI_API_KEY,
+        #         max_tokens=settings.MAX_TOKENS,
+        #         top_p=0.95 if settings.ENVIRONMENT == Environment.PRODUCTION else 0.8,
+        #         presence_penalty=0.1 if settings.ENVIRONMENT == Environment.PRODUCTION else 0.0,
+        #         frequency_penalty=0.1 if settings.ENVIRONMENT == Environment.PRODUCTION else 0.0,
+        #         base_url=settings.LLM_BASE_URL
+        #     ),
+        # },
     ]
 
     @classmethod

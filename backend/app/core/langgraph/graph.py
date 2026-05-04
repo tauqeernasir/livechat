@@ -55,6 +55,8 @@ from app.utils import (
     prepare_messages,
     process_llm_response,
 )
+from app.models.agent_config import AgentConfiguration
+
 
 
 class LangGraphAgent:
@@ -143,7 +145,6 @@ class LangGraphAgent:
         fallback_rule = None
         if workspace_id:
             try:
-                from app.models.agent_config import AgentConfiguration
                 async with database_service.async_session_maker() as db_session:
                     statement = select(AgentConfiguration).where(AgentConfiguration.workspace_id == int(workspace_id))
                     result = await db_session.execute(statement)
