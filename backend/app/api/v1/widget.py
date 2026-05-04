@@ -388,6 +388,17 @@ async def capture_lead(
     session_id = str(uuid.uuid4())
 
     async with database_service.async_session_maker() as db_session:
+        # Create the session first (lead has FK to session)
+        chat_session = Session(
+            id=session_id,
+            user_id=None,
+            workspace_id=widget_config.workspace_id,
+            name="",
+            source="widget",
+        )
+        db_session.add(chat_session)
+        await db_session.flush()
+
         # Store the lead
         lead = Lead(
             workspace_id=widget_config.workspace_id,
@@ -397,16 +408,6 @@ async def capture_lead(
             metadata_=lead_data.metadata,
         )
         db_session.add(lead)
-
-        # Create associated widget session
-        chat_session = Session(
-            id=session_id,
-            user_id=None,
-            workspace_id=widget_config.workspace_id,
-            name="",
-            source="widget",
-        )
-        db_session.add(chat_session)
         await db_session.commit()
 
     token = create_access_token(

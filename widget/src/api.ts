@@ -49,6 +49,19 @@ export async function getMessages(): Promise<ChatMessage[]> {
   return res.json();
 }
 
+export async function submitLead(data: { email: string; name?: string; metadata?: Record<string, string> }): Promise<SessionResponse> {
+  const res = await fetch(`${_baseUrl}/api/v1/widget/lead`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Widget-Key": _widgetKey,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to submit lead");
+  return res.json();
+}
+
 export async function* streamChat(
   messages: ChatMessage[]
 ): AsyncGenerator<StreamChunk> {

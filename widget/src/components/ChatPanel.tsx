@@ -77,8 +77,15 @@ export function ChatPanel({ config, onClose }: Props) {
         }
     };
 
-    const handleLeadSubmit = async (_data: Record<string, string>) => {
-        setState({ leadCaptured: true });
+    const handleLeadSubmit = async (data: Record<string, string>) => {
+        try {
+            const { email, name, ...rest } = data;
+            const session = await api.submitLead({ email, name, metadata: rest });
+            api.setSessionToken(session.access_token);
+            setState({ sessionId: session.session_id, leadCaptured: true });
+        } catch (err) {
+            console.error("[Lagent Widget] Lead submission failed:", err);
+        }
     };
 
     const showLeadForm =
