@@ -14,6 +14,7 @@ from app.api.v1.agent_config import router as agent_config_router
 from app.api.v1.integrations import router as integrations_router
 from app.api.v1.widget import router as widget_router
 from app.api.v1.widget_admin import router as widget_admin_router
+from app.api.v1.stats import router as stats_router
 from app.core.logging import logger
 
 api_router = APIRouter()
@@ -27,6 +28,7 @@ api_router.include_router(agent_config_router, prefix="/agent-config", tags=["ag
 api_router.include_router(integrations_router, prefix="/integrations", tags=["integrations"])
 api_router.include_router(widget_router, prefix="/widget", tags=["widget"])
 api_router.include_router(widget_admin_router, prefix="/widget-admin", tags=["widget-admin"])
+api_router.include_router(stats_router, prefix="/stats", tags=["stats"])
 
 
 @api_router.get("/health")
