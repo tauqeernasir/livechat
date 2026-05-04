@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Sparkles, 
-  ShieldAlert, 
-  Save, 
+import {
+  Sparkles,
+  ShieldAlert,
+  Save,
   RotateCcw,
   CheckCircle2,
   Info
@@ -64,10 +64,10 @@ export default function AgentConfig() {
             <p className="text-gray-500 dark:text-slate-400">Configure your AI's personality and safety boundaries.</p>
           </div>
           <div className="flex gap-3">
-            <button 
+            <button
               onClick={handleSave}
               disabled={isSaving || isLoading}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-gray-900 dark:text-white px-8 py-3 rounded-2xl font-bold transition-all shadow-xl shadow-indigo-600/20 disabled:opacity-50"
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-2xl font-bold transition-all shadow-xl shadow-indigo-600/20 disabled:opacity-50"
             >
               {isSaving ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -99,12 +99,12 @@ export default function AgentConfig() {
                   <p className="text-sm text-gray-400 dark:text-slate-500">How should your AI behave? Define its tone, role, and style.</p>
                 </div>
               </div>
-              <Editor 
-                value={persona} 
-                onChange={setPersona} 
+              <Editor
+                value={persona}
+                onChange={setPersona}
                 placeholder="e.g. You are a helpful support agent for a SaaS company. You are professional, concise, and friendly..."
               />
-              <div className="bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-gray-200 dark:border-slate-800/50 rounded-xl p-4 flex gap-3">
+              <div className="bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800/50 rounded-xl p-4 flex gap-3">
                 <Info className="w-5 h-5 text-indigo-400 shrink-0" />
                 <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
                   <span className="font-bold text-gray-600 dark:text-slate-300">Tip:</span> Be specific. Instead of "be nice", try "maintain a warm, professional tone and use 'we' when referring to the company."
@@ -123,9 +123,9 @@ export default function AgentConfig() {
                   <p className="text-sm text-gray-400 dark:text-slate-500">What should the AI do when it doesn't know the answer?</p>
                 </div>
               </div>
-              <Editor 
-                value={fallbackRule} 
-                onChange={setFallbackRule} 
+              <Editor
+                value={fallbackRule}
+                onChange={setFallbackRule}
                 placeholder="e.g. If you cannot find the answer in the knowledge base, politely ask for their email to follow up later..."
               />
             </section>
