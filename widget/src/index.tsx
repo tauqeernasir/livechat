@@ -39,6 +39,33 @@ export async function init(baseUrl: string, widgetKey: string) {
 
     try {
         const config = await api.fetchConfig();
+
+        // Client-side origin check (defense-in-depth)
+        if (config.allowed_origins && config.allowed_origins.length > 0) {
+            const currentOrigin = window.location.origin.toLowerCase();
+            const currentHostname = window.location.hostname.toLowerCase();
+            const isAllowed = config.allowed_origins.some((allowed) => {
+                const a = allowed.trim().replace(/\/+$/, "").toLowerCase();
+                // If the configured origin has no scheme, compare hostname only
+                const hasScheme = a.includes("://");
+                const hasPort = hasScheme
+                    ? a.split("://")[1]?.includes(":")
+                    : a.includes(":");
+                if (!hasPort) {
+                    // Hostname-only match (any port, any scheme)
+                    const hostname = hasScheme ? a.split("://")[1] : a;
+                    return currentHostname === hostname;
+                }
+                // Exact origin match
+                const normalized = hasScheme ? a : `http://${a}`;
+                return currentOrigin === normalized;
+            });
+            if (!isAllowed) {
+                console.warn("[Lagent Widget] Origin not allowed:", currentOrigin);
+                return;
+            }
+        }
+
         setState({ config });
 
         // Create Shadow DOM host

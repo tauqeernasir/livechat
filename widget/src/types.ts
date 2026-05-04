@@ -7,6 +7,7 @@ export interface WidgetConfig {
   icon_url: string | null;
   lead_capture_enabled: boolean;
   lead_capture_fields: string[];
+  allowed_origins: string[];
 }
 
 /** A chat message. */

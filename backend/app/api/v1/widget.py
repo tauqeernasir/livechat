@@ -46,6 +46,67 @@ router = APIRouter()
 security = HTTPBearer()
 agent = LangGraphAgent()
 
+
+def _normalize_origin(origin: str) -> str:
+    """Normalize an origin string for comparison.
+
+    Strips trailing slashes, lowercases, and adds http:// if no scheme present.
+    """
+    origin = origin.strip().rstrip("/").lower()
+    if origin and "://" not in origin:
+        origin = f"http://{origin}"
+    return origin
+
+
+def _extract_request_origin(request: Request) -> str:
+    """Extract origin from request headers (Origin or Referer fallback)."""
+    from urllib.parse import urlparse
+
+    origin = request.headers.get("origin") or ""
+    if origin:
+        return origin.strip()
+    referer = request.headers.get("referer") or ""
+    if referer:
+        try:
+            parsed = urlparse(referer)
+            return f"{parsed.scheme}://{parsed.netloc}"
+        except Exception:
+            pass
+    return ""
+
+
+def _origin_allowed(request_origin: str, allowed_origins: list[str]) -> bool:
+    """Check if request_origin matches any entry in allowed_origins.
+
+    Normalizes both sides before comparing. If the configured allowed origin
+    has no port, it matches any port on that host (and either http/https).
+    """
+    from urllib.parse import urlparse
+
+    if not request_origin:
+        return False
+
+    req_parsed = urlparse(_normalize_origin(request_origin))
+    req_hostname = req_parsed.hostname or ""
+
+    for allowed in allowed_origins:
+        norm_allowed = _normalize_origin(allowed)
+        allowed_parsed = urlparse(norm_allowed)
+        allowed_hostname = allowed_parsed.hostname or ""
+
+        # If user entered just a hostname (no explicit port in original input),
+        # match any port and either scheme
+        original_has_port = ":" in allowed.strip().rstrip("/").split("://")[-1]
+        if not original_has_port:
+            # Hostname-only match (any port, any scheme)
+            if req_hostname == allowed_hostname:
+                return True
+        else:
+            # Exact origin match (scheme + host + port)
+            if _normalize_origin(request_origin) == norm_allowed:
+                return True
+    return False
+
 WIDGET_SESSION_EXPIRY_HOURS = 4
 WIDGET_KEY_CACHE_TTL = 60  # seconds
 
@@ -106,11 +167,11 @@ async def get_widget_config(
 
     # Check origin restrictions if configured
     if config.allowed_origins and request:
-        origin = request.headers.get("origin")
-        if origin and origin not in config.allowed_origins:
+        request_origin = _extract_request_origin(request)
+        if not _origin_allowed(request_origin, config.allowed_origins):
             logger.warning(
                 "widget_origin_rejected",
-                origin=origin,
+                origin=request_origin,
                 widget_key=x_widget_key,
                 allowed=config.allowed_origins,
             )
@@ -223,6 +284,21 @@ async def get_public_widget_config(
             detail="Widget not found or inactive",
         )
 
+    # Check origin restrictions if configured
+    if config.allowed_origins:
+        request_origin = _extract_request_origin(request)
+        if not _origin_allowed(request_origin, config.allowed_origins):
+            logger.warning(
+                "widget_origin_rejected",
+                origin=request_origin,
+                widget_key=key,
+                allowed=config.allowed_origins,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Origin not allowed",
+            )
+
     return WidgetConfigPublicResponse(
         position=config.position,
         primary_color=config.primary_color,
@@ -231,6 +307,7 @@ async def get_public_widget_config(
         icon_url=config.icon_url,
         lead_capture_enabled=config.lead_capture_enabled,
         lead_capture_fields=config.lead_capture_fields,
+        allowed_origins=config.allowed_origins,
     )
 
 

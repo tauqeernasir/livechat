@@ -26,6 +26,7 @@ class WidgetConfigPublicResponse(BaseModel):
     icon_url: Optional[str] = None
     lead_capture_enabled: bool
     lead_capture_fields: list[str]
+    allowed_origins: list[str] = []
 
 
 class WidgetConfigAdminResponse(BaseModel):
