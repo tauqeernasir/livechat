@@ -9,6 +9,7 @@ import AgentConfig from './pages/AgentConfig';
 import Integrations from './pages/Integrations';
 import Playground from './pages/Playground';
 import WidgetSettings from './pages/WidgetSettings';
+import Leads from './pages/Leads';
 
 function LoadingSpinner() {
   return (
@@ -169,6 +170,19 @@ export default function App() {
           <ProtectedRoute>
             {user?.onboarding_completed ? (
               <WidgetSettings />
+            ) : (
+              <Navigate to="/onboarding" replace />
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/leads"
+        element={
+          <ProtectedRoute>
+            {user?.onboarding_completed ? (
+              <Leads />
             ) : (
               <Navigate to="/onboarding" replace />
             )}
