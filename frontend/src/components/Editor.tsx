@@ -83,7 +83,7 @@ function ToolbarButton({ onClick, active = false, icon }: { onClick: () => void,
     <button
       type="button"
       onClick={onClick}
-      className={`p-2 rounded-lg transition-colors ${active ? 'bg-indigo-600/20 text-indigo-400' : 'text-gray-400 dark:text-slate-500 hover:text-gray-700 dark:text-slate-200 hover:bg-gray-200 dark:hover:bg-slate-700/50'
+      className={`p-2 rounded-lg transition-colors ${active ? 'bg-indigo-600/20 text-indigo-400' : 'text-gray-400 dark:text-slate-500 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-200 dark:hover:bg-slate-700/50'
         }`}
     >
       {icon}

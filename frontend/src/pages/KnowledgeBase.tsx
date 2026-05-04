@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Plus, 
-  FileText, 
-  Upload, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
+import {
+  Plus,
+  FileText,
+  Upload,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
   Search,
   MoreVertical,
   Trash2,
@@ -97,7 +97,7 @@ export default function KnowledgeBase() {
         `/knowledge/upload?workspace_id=${user.workspace_id}`,
         formData,
         {
-          headers: { 
+          headers: {
             'Content-Type': 'multipart/form-data'
           }
         }
@@ -132,7 +132,7 @@ export default function KnowledgeBase() {
     }
   };
 
-  const filteredSources = sources.filter(source => 
+  const filteredSources = sources.filter(source =>
     source.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -145,14 +145,14 @@ export default function KnowledgeBase() {
             <p className="text-gray-500 dark:text-slate-400">Manage the data your AI agents use to answer questions.</p>
           </div>
           <div className="flex gap-3">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileUpload} 
-              className="hidden" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
               accept=".pdf,.docx,.txt"
             />
-            <button 
+            <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
               className="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-900 dark:text-white px-5 py-2.5 rounded-xl font-medium transition-all border border-gray-300 dark:border-slate-700/50 disabled:opacity-50"
@@ -160,9 +160,9 @@ export default function KnowledgeBase() {
               <Upload className="w-4 h-4" />
               {isUploading ? 'Uploading...' : 'Upload File'}
             </button>
-            <button 
+            <button
               onClick={() => setIsManualModalOpen(true)}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-gray-900 dark:text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-600/20"
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-600/20"
             >
               <Plus className="w-4 h-4" />
               Add Manual Entry
@@ -173,12 +173,12 @@ export default function KnowledgeBase() {
         {/* Search and Filters */}
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-slate-500" />
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Search sources..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-4 text-gray-900 dark:text-white placeholder:text-gray-300 dark:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
+            className="w-full bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-4 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
           />
         </div>
 
@@ -192,7 +192,7 @@ export default function KnowledgeBase() {
           ) : filteredSources.length > 0 ? (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-200 dark:border-slate-800/50 bg-gray-100 dark:bg-slate-800/20">
+                <tr className="border-b border-gray-200 dark:border-slate-800/50 bg-gray-100 dark:bg-slate-800/20">
                   <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Source</th>
                   <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Type</th>
                   <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Status</th>
@@ -200,9 +200,9 @@ export default function KnowledgeBase() {
                   <th className="px-6 py-4"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/50">
+              <tbody className="divide-y divide-gray-200 dark:divide-slate-800/50">
                 {filteredSources.map((source) => (
-                  <tr key={source.id} className="hover:bg-gray-100 dark:bg-slate-800/30 transition-colors group">
+                  <tr key={source.id} className="hover:bg-gray-100 dark:hover:bg-slate-800/30 transition-colors group">
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border border-gray-300 dark:border-slate-700/50">
@@ -234,7 +234,7 @@ export default function KnowledgeBase() {
                       </p>
                     </td>
                     <td className="px-6 py-5 text-right">
-                      <button className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:text-white transition-colors">
+                      <button className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:hover:text-white transition-colors">
                         <MoreVertical className="w-4 h-4" />
                       </button>
                     </td>
@@ -276,35 +276,35 @@ export default function KnowledgeBase() {
                 <div className="flex-grow overflow-y-auto p-6 space-y-6">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-600 dark:text-slate-300">Entry Name</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="e.g. Refund Policy 2024"
                       value={manualName}
                       onChange={(e) => setManualName(e.target.value)}
-                      className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-300 dark:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
+                      className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-600 dark:text-slate-300">Content</label>
-                    <Editor 
-                      value={manualContent} 
-                      onChange={setManualContent} 
+                    <Editor
+                      value={manualContent}
+                      onChange={setManualContent}
                     />
                   </div>
                 </div>
 
                 <footer className="p-6 border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex gap-3">
-                  <button 
+                  <button
                     onClick={() => setIsManualModalOpen(false)}
-                    className="flex-grow py-3 rounded-xl font-bold text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-slate-800 transition-all"
+                    className="flex-grow py-3 rounded-xl font-bold text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     onClick={handleSaveManual}
                     disabled={isSavingManual || !manualName || !manualContent}
-                    className="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-gray-900 dark:text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {isSavingManual ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
