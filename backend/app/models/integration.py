@@ -102,6 +102,7 @@ class IntegrationOperation(BaseModel, table=True):
         summary: Short description for the LLM
         description: Full description for the LLM
         parameters_schema: JSON schema for the operation parameters
+        response_schema: JSON schema describing the success response body
         enabled: Whether this operation is available to the model
         integration: Relationship to integration
     """
@@ -114,6 +115,7 @@ class IntegrationOperation(BaseModel, table=True):
     summary: Optional[str] = Field(default=None, sa_column=Column(Text))
     description: Optional[str] = Field(default=None, sa_column=Column(Text))
     parameters_schema: Optional[dict] = Field(default=None, sa_column=Column(JSON))
+    response_schema: Optional[dict] = Field(default=None, sa_column=Column(JSON))
     enabled: bool = Field(default=False)
 
     integration: Integration = Relationship(back_populates="operations")

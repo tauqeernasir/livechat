@@ -67,6 +67,7 @@ class OperationResponse(BaseModel):
     path: str
     summary: Optional[str] = None
     description: Optional[str] = None
+    response_schema: Optional[dict] = None
     enabled: bool
 
     model_config = {"from_attributes": True}

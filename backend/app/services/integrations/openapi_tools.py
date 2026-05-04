@@ -123,8 +123,15 @@ def build_openapi_tools(operations: List[dict]) -> List[StructuredTool]:
         raw_name = f"{op['integration_name']}__{op['operation_id']}"
         tool_name = re.sub(r"[^a-zA-Z0-9_]", "_", raw_name)[:64]
 
-        description = op.get("summary") or op.get("description") or f"{op['method']} {op['path']}"
+        description = op.get("description") or op.get("summary") or f"{op['method']} {op['path']}"
         description = f"[{op['integration_name']}] {description}"
+
+        # Append response schema hint so the LLM knows what data to expect
+        resp_schema = op.get("response_schema")
+        if resp_schema:
+            schema_str = json.dumps(resp_schema, indent=None, ensure_ascii=False)
+            if len(schema_str) <= 600:
+                description += f" | Response schema: {schema_str}"
 
         func = _build_tool_func(
             base_url=base_url,

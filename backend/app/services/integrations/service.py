@@ -313,6 +313,7 @@ class IntegrationService:
                     "summary": operation.summary,
                     "description": operation.description,
                     "parameters_schema": operation.parameters_schema,
+                    "response_schema": operation.response_schema,
                 }
             )
         return ops

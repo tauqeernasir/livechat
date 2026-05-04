@@ -49,6 +49,8 @@ dependencies = [
     "langchain-text-splitters>=1.0.0",
     "sentence-transformers>=5.4.1",
     "pgvector>=0.4.2",
+    "prance>=25.4.8.0",
+    "openapi-spec-validator>=0.8.5",
 ]
 
 [project.optional-dependencies]
