@@ -237,7 +237,6 @@ class LangGraphAgent:
                 graph_builder.add_node("chat", self._chat, ends=["tool_call", END])
                 graph_builder.add_node("tool_call", self._tool_call, ends=["chat"])
                 graph_builder.set_entry_point("chat")
-                graph_builder.set_finish_point("chat")
 
                 # Get connection pool (may be None in production if DB unavailable)
                 connection_pool = await self._get_connection_pool()

@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../lib/auth';
 import api from '../lib/api';
 import Layout from '../components/Layout';
-import { 
-  Send, 
-  Plus, 
-  Trash2, 
-  Clock, 
-  MessageSquare, 
-  Bot, 
+import {
+  Send,
+  Plus,
+  Trash2,
+  Clock,
+  MessageSquare,
+  Bot,
   User as UserIcon,
   ChevronDown,
   Loader2,
@@ -84,7 +84,7 @@ export default function Playground() {
   const createNewSession = async () => {
     if (!selectedWorkspaceId) return;
     try {
-      const response = await api.post(`/auth/sessions?workspace_id=${selectedWorkspaceId}`);
+      const response = await api.post(`/auth/session?workspace_id=${selectedWorkspaceId}`);
       const newSession = {
         id: response.data.session_id,
         name: response.data.name || 'New Chat',
@@ -100,7 +100,7 @@ export default function Playground() {
   const selectSession = async (sessionId: string, token?: string) => {
     setActiveSessionId(sessionId);
     setMessages([]);
-    
+
     // If we don't have a token (e.g. from history), we need to handle it.
     // In this MVP, we'll assume we can use the user token to fetch history,
     // but the actual chat needs the session token.
@@ -109,7 +109,7 @@ export default function Playground() {
     // For now, let's just use the USER token for chat too if the backend allows it.
     // Actually, the chatbot.py Depends(get_current_session) which expects a session token.
     // So we MUST get a session token.
-    
+
     if (token) {
       setActiveSessionToken(token);
     } else {
@@ -158,7 +158,7 @@ export default function Playground() {
       // The backend uses get_current_session which checks Authorization header for a session token.
       // If we don't have a session token, we'll have issues.
       // Let's assume for now we use the user token and the backend is updated to support it.
-      
+
       const response = await fetch('/api/v1/chatbot/chat/stream', {
         method: 'POST',
         headers: {
@@ -167,7 +167,7 @@ export default function Playground() {
           'X-Session-Id': activeSessionId
         },
         body: JSON.stringify({
-          messages: [...messages, userMessage]
+          messages: [userMessage]
         })
       });
 
@@ -192,14 +192,14 @@ export default function Playground() {
             try {
               const data = JSON.parse(line.slice(6));
               if (data.done) break;
-              
+
               assistantContent += data.content;
-              
+
               // Simple heuristic to extract sources from the text if they are appended
               // (Our backend tool appends them in a specific format)
               // Actually, the LangGraph agent might return them in a different way.
               // For now, let's just display the content as is.
-              
+
               setMessages(prev => {
                 const last = prev[prev.length - 1];
                 return [
@@ -226,11 +226,11 @@ export default function Playground() {
 
   return (
     <Layout fullWidth>
-      <div className="flex h-full bg-slate-950 overflow-hidden border-t border-slate-900">
+      <div className="flex h-screen bg-slate-950 overflow-hidden border-t border-slate-900">
         {/* Sessions Sidebar */}
         <div className="w-80 border-r border-slate-900 bg-slate-900/20 flex flex-col">
           <div className="p-4 border-b border-slate-900">
-            <button 
+            <button
               onClick={createNewSession}
               className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/10"
             >
@@ -238,7 +238,7 @@ export default function Playground() {
               New Chat
             </button>
           </div>
-          
+
           <div className="flex-grow overflow-y-auto p-3 space-y-2 custom-scrollbar">
             {isLoadingSessions ? (
               <div className="flex flex-col items-center justify-center py-10 text-slate-500 gap-3">
@@ -252,20 +252,19 @@ export default function Playground() {
               </div>
             ) : (
               sessions.map(session => (
-                <div 
+                <div
                   key={session.id}
                   onClick={() => selectSession(session.id)}
-                  className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border ${
-                    activeSessionId === session.id 
-                      ? 'bg-indigo-600/10 border-indigo-500/30 text-white' 
-                      : 'bg-transparent border-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200'
-                  }`}
+                  className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border ${activeSessionId === session.id
+                    ? 'bg-indigo-600/10 border-indigo-500/30 text-white'
+                    : 'bg-transparent border-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                    }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <MessageSquare className={`w-4 h-4 flex-shrink-0 ${activeSessionId === session.id ? 'text-indigo-400' : 'text-slate-600'}`} />
                     <span className="text-sm truncate font-medium">{session.name}</span>
                   </div>
-                  <button 
+                  <button
                     onClick={(e) => deleteSession(session.id, e)}
                     className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-rose-500/10 hover:text-rose-400 rounded-lg transition-all"
                   >
@@ -284,8 +283,8 @@ export default function Playground() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl relative group">
                 <Bot className="w-4 h-4 text-indigo-500" />
-                <select 
-                  value={selectedWorkspaceId || ''} 
+                <select
+                  value={selectedWorkspaceId || ''}
                   onChange={(e) => setSelectedWorkspaceId(Number(e.target.value))}
                   className="bg-transparent text-sm font-semibold text-white outline-none cursor-pointer pr-6 appearance-none"
                 >
@@ -299,7 +298,7 @@ export default function Playground() {
             </div>
 
             {activeSessionId && (
-              <button 
+              <button
                 onClick={() => selectSession(activeSessionId)}
                 className="p-2 text-slate-500 hover:text-indigo-400 transition-colors"
                 title="Reset local state"
@@ -321,7 +320,7 @@ export default function Playground() {
                   Select a session from the history or start a new one to verify your agent's training and personality.
                 </p>
                 {!activeSessionId && (
-                  <button 
+                  <button
                     onClick={createNewSession}
                     className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold px-6 py-3 rounded-xl border border-slate-800 transition-all"
                   >
@@ -334,21 +333,19 @@ export default function Playground() {
               <>
                 {messages.map((msg, idx) => (
                   <div key={idx} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg ${
-                      msg.role === 'assistant' 
-                        ? 'bg-indigo-600 text-white shadow-indigo-600/10' 
-                        : 'bg-slate-800 text-slate-400'
-                    }`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'assistant'
+                      ? 'bg-indigo-600 text-white shadow-indigo-600/10'
+                      : 'bg-slate-800 text-slate-400'
+                      }`}>
                       {msg.role === 'assistant' ? <Bot className="w-5 h-5" /> : <UserIcon className="w-5 h-5" />}
                     </div>
                     <div className={`flex flex-col max-w-[80%] ${msg.role === 'user' ? 'items-end' : ''}`}>
-                      <div className={`px-5 py-4 rounded-2xl whitespace-pre-wrap text-sm leading-relaxed ${
-                        msg.role === 'assistant' 
-                          ? 'bg-slate-900 border border-slate-800 text-slate-200' 
-                          : 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/10'
-                      }`}>
+                      <div className={`px-5 py-4 rounded-2xl whitespace-pre-wrap text-sm leading-relaxed ${msg.role === 'assistant'
+                        ? 'bg-slate-900 border border-slate-800 text-slate-200'
+                        : 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/10'
+                        }`}>
                         {msg.content}
-                        
+
                         {msg.role === 'assistant' && msg.content === '' && isStreaming && (
                           <span className="inline-flex gap-1 items-center ml-1">
                             <span className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
@@ -366,7 +363,7 @@ export default function Playground() {
                               For now, let's assume we parse "(Source: filename)" patterns.
                           */}
                           {extractSources(msg.content).map((source, sIdx) => (
-                            <div 
+                            <div
                               key={sIdx}
                               className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900/50 border border-slate-800 rounded-lg text-[10px] font-bold text-slate-500 hover:text-indigo-400 hover:border-indigo-500/30 transition-all cursor-default"
                             >
@@ -389,7 +386,7 @@ export default function Playground() {
             <div className="max-w-4xl mx-auto relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition-all duration-500"></div>
               <div className="relative flex items-center bg-slate-900 border border-slate-800 rounded-2xl p-2 pl-4 transition-all focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5 shadow-xl">
-                <input 
+                <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -398,7 +395,7 @@ export default function Playground() {
                   disabled={!activeSessionId || isStreaming}
                   className="flex-grow bg-transparent border-none outline-none text-white text-sm py-2 disabled:opacity-50"
                 />
-                <button 
+                <button
                   onClick={handleSend}
                   disabled={!input.trim() || !activeSessionId || isStreaming}
                   className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:bg-slate-800 text-white p-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
@@ -407,9 +404,6 @@ export default function Playground() {
                 </button>
               </div>
             </div>
-            <p className="text-center text-[10px] text-slate-600 mt-4 uppercase tracking-[0.2em] font-bold">
-              Powered by LangGraph & RAG Infrastructure
-            </p>
           </div>
         </div>
       </div>

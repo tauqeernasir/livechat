@@ -23,6 +23,7 @@ from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
 )
+from sqlalchemy import exists
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -346,11 +347,14 @@ async def get_user_workspaces(
 
 @router.post("/session", response_model=SessionResponse)
 async def create_session(
-    user: User = Depends(get_current_user), session_db: AsyncSession = Depends(database_service.get_async_session)
+    workspace_id: Optional[int] = None,
+    user: User = Depends(get_current_user), 
+    session_db: AsyncSession = Depends(database_service.get_async_session)
 ):
     """Create a new chat session for the authenticated user.
 
     Args:
+        workspace_id: Optional workspace ID to create the session for.
         user: The authenticated user
         session_db: Database session
 
@@ -358,15 +362,30 @@ async def create_session(
         SessionResponse: The session ID, name, and access token
     """
     try:
-        # Resolve workspace_id from user's organization
-        workspace_id = None
-        if user.organization_id:
+        # If workspace_id is provided, verify it belongs to user's org
+        if workspace_id is not None:
+            if not user.organization_id:
+                raise HTTPException(status_code=403, detail="User has no organization")
+            
             result = await session_db.execute(
-                select(Workspace.id).where(Workspace.org_id == user.organization_id).limit(1)
+                select(
+                    exists().where(
+                        Workspace.id == workspace_id, 
+                        Workspace.org_id == user.organization_id
+                    )
+                )
             )
-            workspace_row = result.first()
-            if workspace_row:
-                workspace_id = workspace_row[0]
+            if not result.scalar():
+                raise HTTPException(status_code=403, detail="Workspace not found or unauthorized")
+        else:
+            # Resolve default workspace_id from user's organization
+            if user.organization_id:
+                result = await session_db.execute(
+                    select(Workspace.id).where(Workspace.org_id == user.organization_id).limit(1)
+                )
+                workspace_row = result.first()
+                if workspace_row:
+                    workspace_id = workspace_row[0]
 
         if not workspace_id:
             logger.error("workspace_not_found_for_session", user_id=user.id)

@@ -187,7 +187,46 @@ class LLMService:
             OpenAIError: Propagated after all retry attempts are exhausted.
         """
         try:
-            response = await llm.ainvoke(messages)
+            # We use astream and manually aggregate to prevent LangChain's AIMessageChunk.__add__
+            # from dropping custom structured blocks (like reasoning/text lists) returned by llama-server
+            # during streaming.
+            final_response = None
+            text_content = ""
+            
+            if hasattr(llm, "astream"):
+                try:
+                    async for chunk in llm.astream(messages):
+                        if final_response is None:
+                            final_response = chunk
+                        else:
+                            # Let LangChain handle tool_call_chunks merging and parsing
+                            final_response += chunk
+                                
+                        # Extract text safely from various chunk formats to bypass LangChain dropping them
+                        if isinstance(chunk.content, str):
+                            text_content += chunk.content
+                        elif isinstance(chunk.content, list):
+                            for block in chunk.content:
+                                if isinstance(block, dict) and block.get("type") == "text":
+                                    text_content += block.get("text", "")
+                                elif isinstance(block, str):
+                                    text_content += block
+                                    
+                    if final_response is not None:
+                        # Overwrite the broken aggregated content with our pristine manual text
+                        final_response.content = text_content
+                        response = final_response
+                    else:
+                        response = await llm.ainvoke(messages)
+                except Exception as stream_err:
+                    if final_response is not None:
+                        logger.warning("astream_failed_mid_stream", error=str(stream_err))
+                        raise
+                    logger.debug("astream_failed_falling_back_to_ainvoke", error=str(stream_err))
+                    response = await llm.ainvoke(messages)
+            else:
+                response = await llm.ainvoke(messages)
+                
             logger.debug("llm_call_successful", message_count=len(messages))
             return response
         except (RateLimitError, APITimeoutError, APIError) as e:
