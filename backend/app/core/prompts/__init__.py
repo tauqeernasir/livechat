@@ -15,6 +15,9 @@ with open(os.path.join(_PROMPTS_DIR, "system.md"), "r") as _f:
 with open(os.path.join(_PROMPTS_DIR, "session_title.md"), "r") as _f:
     SESSION_TITLE_PROMPT = _f.read()
 
+with open(os.path.join(_PROMPTS_DIR, "classifier.md"), "r") as _f:
+    _CLASSIFIER_PROMPT_TEMPLATE = _f.read()
+
 
 def load_system_prompt(username: Optional[str] = None, **kwargs):
     """Load the system prompt from the cached template."""
@@ -31,4 +34,12 @@ def load_system_prompt(username: Optional[str] = None, **kwargs):
         persona=persona,
         fallback_rule=fallback_rule,
         **{k: v for k, v in kwargs.items() if k not in ["persona", "fallback_rule"]},
+    )
+
+
+def load_classifier_prompt() -> str:
+    """Load the classifier prompt from the cached template."""
+    return _CLASSIFIER_PROMPT_TEMPLATE.format(
+        agent_name=settings.PROJECT_NAME + " Agent",
+        current_date_and_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )

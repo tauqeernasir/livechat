@@ -11,6 +11,8 @@ from langchain_core.messages import (
     AIMessage,
     AIMessageChunk,
     BaseMessage,
+    HumanMessage,
+    SystemMessage,
     ToolMessage,
     convert_to_openai_messages,
 )
@@ -42,10 +44,14 @@ from app.core.langgraph.tools import tools
 from app.core.logging import logger
 from app.core.metrics import llm_inference_duration_seconds
 from app.core.observability import langfuse_callback_handler
-from app.core.prompts import load_system_prompt
+from app.core.prompts import (
+    load_classifier_prompt,
+    load_system_prompt,
+)
 from app.schemas import (
     GraphState,
     Message,
+    QueryClassification,
 )
 from app.services.database import database_service
 from app.services.llm import llm_service
@@ -79,6 +85,117 @@ class LangGraphAgent:
             model=settings.DEFAULT_LLM_MODEL,
             environment=settings.ENVIRONMENT.value,
         )
+
+    @staticmethod
+    def _latest_user_message(messages: list) -> str:
+        """Extract the latest user message content from graph state messages."""
+        def _normalize_content(content: object) -> str:
+            if content is None:
+                return ""
+            if isinstance(content, list):
+                return extract_text_content(content).strip()
+            return str(content).strip()
+
+        for message in reversed(messages):
+            role = getattr(message, "role", None)
+            msg_type = getattr(message, "type", None)
+            content = getattr(message, "content", None)
+
+            if isinstance(message, dict):
+                role = message.get("role")
+                msg_type = message.get("type")
+                content = message.get("content")
+
+            is_user_message = role in {"user", "human"} or msg_type == "human"
+            normalized_content = _normalize_content(content)
+
+            if is_user_message and normalized_content:
+                return normalized_content
+        return ""
+
+    async def _classify_query(self, state: GraphState, config: RunnableConfig) -> Command:
+        """Classify latest user intent and relevance before entering chat flow."""
+        latest_user_query = self._latest_user_message(state.messages)
+
+        logger.info(
+            "latest_user_query",
+            session_id=config["configurable"]["thread_id"],
+            latest_user_query=latest_user_query,
+        )
+
+        if not latest_user_query:
+            return Command(
+                update={
+                    "intent": "support",
+                    "is_relevant": True,
+                    "relevance_confidence": 0.5,
+                    "classifier_reason": "no_user_message_found",
+                },
+                goto="chat",
+            )
+
+        try:
+            classifier_prompt = load_classifier_prompt()
+            classification = await self.llm_service.call(
+                [
+                    SystemMessage(content=classifier_prompt),
+                    HumanMessage(content=latest_user_query),
+                ],
+                response_format=QueryClassification,
+                temperature=0,
+                max_tokens=120,
+                reasoning={"effort": "low"},
+            )
+
+            intent = classification.intent
+            is_relevant = classification.is_relevant
+            if not is_relevant:
+                intent = "irrelevant"
+
+            logger.info(
+                "query_classified",
+                session_id=config["configurable"]["thread_id"],
+                intent=intent,
+                is_relevant=is_relevant,
+                confidence=classification.confidence,
+            )
+
+            return Command(
+                update={
+                    "intent": intent,
+                    "is_relevant": is_relevant,
+                    "relevance_confidence": classification.confidence,
+                    "classifier_reason": classification.reason,
+                },
+                goto="chat" if is_relevant else "reject",
+            )
+        except Exception as e:
+            logger.exception(
+                "query_classification_failed",
+                session_id=config["configurable"]["thread_id"],
+                error=str(e),
+            )
+            # Fail-open so valid user requests are not blocked if classifier fails.
+            return Command(
+                update={
+                    "intent": "support",
+                    "is_relevant": True,
+                    "relevance_confidence": 0.0,
+                    "classifier_reason": "classifier_failed_fail_open",
+                },
+                goto="chat",
+            )
+
+    async def _reject_irrelevant(self, state: GraphState) -> Command:
+        """Return a polite rejection for requests outside company domain."""
+        del state
+        response_message = AIMessage(
+            content=(
+                "I can only help with topics related to our company's products and services. "
+                "Please share a question about our offerings, pricing, onboarding, account issues, or support needs."
+            )
+        )
+        return Command(update={"messages": [response_message]}, goto=END)
 
     async def _get_connection_pool(self) -> AsyncConnectionPool:
         """Get a PostgreSQL connection pool using environment-specific settings.
@@ -233,9 +350,11 @@ class LangGraphAgent:
         if self._graph is None:
             try:
                 graph_builder = StateGraph(GraphState)
+                graph_builder.add_node("classify_query", self._classify_query, ends=["chat", "reject"])
                 graph_builder.add_node("chat", self._chat, ends=["tool_call", END])
                 graph_builder.add_node("tool_call", self._tool_call, ends=["chat"])
-                graph_builder.set_entry_point("chat")
+                graph_builder.add_node("reject", self._reject_irrelevant, ends=[END])
+                graph_builder.set_entry_point("classify_query")
 
                 # Get connection pool (may be None in production if DB unavailable)
                 connection_pool = await self._get_connection_pool()
@@ -379,12 +498,19 @@ class LangGraphAgent:
             else:
                 graph_input = {"messages": dump_messages(messages)}
 
-            async for token, _ in self._graph.astream(
+            async for token, metadata in self._graph.astream(
                 graph_input,
                 config,
                 stream_mode="messages",
             ):
                 if not isinstance(token, (AIMessage, AIMessageChunk)):
+                    continue
+
+                # Avoid leaking internal classifier/tool-model emissions to clients.
+                node_name = None
+                if isinstance(metadata, dict):
+                    node_name = metadata.get("langgraph_node") or metadata.get("node")
+                if node_name and node_name not in {"chat", "reject"}:
                     continue
 
                 text = extract_text_content(token.content)
