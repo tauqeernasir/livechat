@@ -9,5 +9,6 @@ from langchain_core.tools.base import BaseTool
 
 from .ask_human import ask_human
 from .knowledge_base import search_knowledge_base
+from .get_order_details import get_order_details
 
-tools: list[BaseTool] = [ask_human, search_knowledge_base]
+tools: list[BaseTool] = [ask_human, search_knowledge_base, get_order_details]

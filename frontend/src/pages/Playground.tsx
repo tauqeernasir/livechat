@@ -228,7 +228,7 @@ export default function Playground() {
     <Layout fullWidth>
       <div className="flex h-screen bg-slate-950 overflow-hidden border-t border-slate-900">
         {/* Sessions Sidebar */}
-        <div className="w-80 border-r border-slate-900 bg-slate-900/20 flex flex-col">
+        <div className="w-80 border-r border-slate-900 bg-slate-900/20 flex flex-col min-w-[250px] w-[250px]">
           <div className="p-4 border-b border-slate-900">
             <button
               onClick={createNewSession}
