@@ -8,6 +8,7 @@ from app.models.session import Session
 from app.models.thread import Thread
 from app.models.knowledge import KnowledgeSource, DocumentChunk
 from app.models.agent_config import AgentConfiguration
+from app.models.integration import Integration, IntegrationOperation
 
 __all__ = [
     "BaseModel",
@@ -19,4 +20,6 @@ __all__ = [
     "KnowledgeSource",
     "DocumentChunk",
     "AgentConfiguration",
+    "Integration",
+    "IntegrationOperation",
 ]

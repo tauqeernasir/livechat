@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.core.logging import logger
 from app.services.database import database_service
 from app.services.knowledge.service import knowledge_service
+from app.services.integrations.service import integration_service
 
 
 async def process_knowledge_source_task(ctx: dict, source_id: int):
@@ -14,6 +15,21 @@ async def process_knowledge_source_task(ctx: dict, source_id: int):
     
     async with database_service.async_session_maker() as session:
         await knowledge_service.process_source(session, source_id)
+
+
+async def sync_integration_spec_task(ctx: dict, integration_id: int, workspace_id: int):
+    """Worker task to re-fetch and re-parse an integration's OpenAPI spec."""
+    logger.info(
+        "worker_task_started",
+        task="sync_integration_spec",
+        integration_id=integration_id,
+    )
+    async with database_service.async_session_maker() as session:
+        integration = await integration_service.get_integration(
+            session, integration_id, workspace_id
+        )
+        if integration:
+            await integration_service.resync_spec(session, integration)
 
 
 async def startup(ctx):
@@ -30,7 +46,7 @@ async def shutdown(ctx):
 class WorkerSettings:
     """Worker configuration for arq."""
 
-    functions = [process_knowledge_source_task]
+    functions = [process_knowledge_source_task, sync_integration_spec_task]
     redis_settings = RedisSettings(
         host=settings.VALKEY_HOST or "localhost",
         port=settings.VALKEY_PORT or 6379,

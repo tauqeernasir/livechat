@@ -147,6 +147,50 @@ class LLMService:
         """
         return self._llm
 
+    async def call_with_tools(
+        self,
+        messages: List[BaseMessage],
+        tools: List,
+    ) -> BaseMessage:
+        """Call the LLM with a per-request tool set (no shared state mutation).
+
+        This creates a fresh tool-bound model for the call so workspace-specific
+        tool lists don't interfere with each other or the default agent path.
+
+        Args:
+            messages: Conversation messages.
+            tools: LangChain tools to bind for this call only.
+
+        Returns:
+            BaseMessage from the LLM.
+        """
+        try:
+            return await asyncio.wait_for(
+                self._call_with_tools_impl(messages, tools),
+                timeout=settings.LLM_TOTAL_TIMEOUT,
+            )
+        except asyncio.TimeoutError:
+            logger.exception("llm_call_with_tools_timeout")
+            raise RuntimeError(f"LLM call with tools timed out after {settings.LLM_TOTAL_TIMEOUT}s")
+
+    async def _call_with_tools_impl(
+        self,
+        messages: List[BaseMessage],
+        tools: List,
+    ) -> BaseMessage:
+        """Internal: one-off tool-bound call with fallback loop."""
+        total = len(LLMRegistry.LLMS)
+        start = self._current_model_index
+
+        def get_target(idx: int) -> Any:
+            base = LLMRegistry.get(LLMRegistry.LLMS[idx]["name"])
+            return base.bind_tools(tools)
+
+        def advance(idx: int) -> Optional[int]:
+            return (idx + 1) % total
+
+        return await self._fallback_loop(messages, start, get_target, advance)
+
     def bind_tools(self, tools: List) -> "LLMService":
         """Bind tools to the default LLM instance.
 
@@ -161,6 +205,23 @@ class LLMService:
             self._llm = self._llm.bind_tools(tools)
             logger.debug("tools_bound_to_llm", tool_count=len(tools))
         return self
+
+    def get_tool_bound_llm(self, tools: List) -> Any:
+        """Return a *new* tool-bound LLM without mutating the shared default instance.
+
+        Use this for per-workspace dynamic tool sets so concurrent requests
+        with different tool lists don't interfere.
+
+        Args:
+            tools: List of LangChain tools to bind.
+
+        Returns:
+            A tool-bound Runnable (same type as self._llm after bind_tools).
+        """
+        base = LLMRegistry.get(
+            LLMRegistry.LLMS[self._current_model_index]["name"]
+        )
+        return base.bind_tools(tools)
 
     # ------------------------------------------------------------------
     # Internal helpers

@@ -55,6 +55,8 @@ from app.schemas import (
 )
 from app.services.database import database_service
 from app.services.llm import llm_service
+from app.services.integrations.service import integration_service
+from app.services.integrations.openapi_tools import build_openapi_tools
 from app.utils import (
     dump_messages,
     extract_text_content,
@@ -74,10 +76,11 @@ class LangGraphAgent:
 
     def __init__(self):
         """Initialize the LangGraph Agent with necessary components."""
-        # Use the LLM service with tools bound
         self.llm_service = llm_service
-        self.llm_service.bind_tools(tools)
-        self.tools_by_name = {tool.name: tool for tool in tools}
+        # Bind base (built-in) tools for the default path
+        self.base_tools = tools
+        self.llm_service.bind_tools(self.base_tools)
+        self.base_tools_by_name = {tool.name: tool for tool in self.base_tools}
         self._connection_pool: Optional[AsyncConnectionPool] = None
         self._graph: Optional[CompiledStateGraph] = None
         logger.info(
@@ -282,10 +285,41 @@ class LangGraphAgent:
         # Prepare messages with system prompt
         messages = prepare_messages(state.messages, SYSTEM_PROMPT)
 
+        # Resolve workspace-specific integration tools
+        workspace_tools = []
+        if workspace_id:
+            try:
+                async with database_service.async_session_maker() as db_session:
+                    enabled_ops = await integration_service.get_enabled_operations(
+                        db_session, int(workspace_id)
+                    )
+                if enabled_ops:
+                    workspace_tools = build_openapi_tools(enabled_ops)
+                    logger.info(
+                        "workspace_tools_resolved",
+                        workspace_id=workspace_id,
+                        tool_count=len(workspace_tools),
+                    )
+            except Exception as e:
+                logger.error(
+                    "failed_to_load_workspace_tools",
+                    workspace_id=workspace_id,
+                    error=str(e),
+                )
+
+        # Combine base + workspace tools
+        all_tools = list(self.base_tools) + workspace_tools
+        all_tools_by_name = {tool.name: tool for tool in all_tools}
+
         try:
-            # Use LLM service with automatic retries and circular fallback
+            # Use per-request tool binding when workspace has extra tools
             with llm_inference_duration_seconds.labels(model=model_name).time():
-                response_message = await self.llm_service.call(dump_messages(messages))
+                if workspace_tools:
+                    response_message = await self.llm_service.call_with_tools(
+                        dump_messages(messages), all_tools
+                    )
+                else:
+                    response_message = await self.llm_service.call(dump_messages(messages))
 
             # Process response to handle structured content blocks
             response_message = process_llm_response(response_message)
@@ -314,22 +348,56 @@ class LangGraphAgent:
             raise Exception(f"failed to get llm response after trying all models: {str(e)}")
 
     # Define our tool node
-    async def _tool_call(self, state: GraphState) -> Command:
+    async def _tool_call(self, state: GraphState, config: RunnableConfig) -> Command:
         """Process tool calls from the last message.
+
+        Resolves workspace-specific integration tools dynamically so that
+        both base tools and OpenAPI tools can be dispatched.
 
         Args:
             state: The current agent state containing messages and tool calls.
+            config: The runnable configuration for this invocation.
 
         Returns:
             Command: Command object with updated messages and routing back to chat.
         """
         tool_calls = state.messages[-1].tool_calls
 
+        # Build the combined tools map for this workspace
+        tools_by_name = dict(self.base_tools_by_name)
+
+        metadata = config.get("metadata", {})
+        workspace_id = metadata.get("workspace_id")
+        if workspace_id:
+            try:
+                async with database_service.async_session_maker() as db_session:
+                    enabled_ops = await integration_service.get_enabled_operations(
+                        db_session, int(workspace_id)
+                    )
+                if enabled_ops:
+                    for t in build_openapi_tools(enabled_ops):
+                        tools_by_name[t.name] = t
+            except Exception as e:
+                logger.error(
+                    "failed_to_load_workspace_tools_in_tool_call",
+                    workspace_id=workspace_id,
+                    error=str(e),
+                )
+
         async def _execute_tool(tool_call: dict) -> ToolMessage:
-            tool_result = await self.tools_by_name[tool_call["name"]].ainvoke(tool_call["args"])
+            tool_name = tool_call["name"]
+            tool = tools_by_name.get(tool_name)
+            if tool is None:
+                logger.warning("tool_not_found", tool_name=tool_name)
+                return ToolMessage(
+                    content=f"Error: tool '{tool_name}' is not available.",
+                    name=tool_name,
+                    tool_call_id=tool_call["id"],
+                )
+            tool_result = await tool.ainvoke(tool_call["args"])
             return ToolMessage(
                 content=tool_result,
-                name=tool_call["name"],
+                name=tool_name,
                 tool_call_id=tool_call["id"],
             )
 

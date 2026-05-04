@@ -6,6 +6,7 @@ import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import KnowledgeBase from './pages/KnowledgeBase';
 import AgentConfig from './pages/AgentConfig';
+import Integrations from './pages/Integrations';
 import Playground from './pages/Playground';
 
 function LoadingSpinner() {
@@ -53,23 +54,23 @@ export default function App() {
 
   return (
     <Routes>
-      <Route 
-        path="/login" 
+      <Route
+        path="/login"
         element={
           <PublicRoute>
             <Login />
           </PublicRoute>
-        } 
+        }
       />
-      <Route 
-        path="/register" 
+      <Route
+        path="/register"
         element={
           <PublicRoute>
             <Register />
           </PublicRoute>
-        } 
+        }
       />
-      
+
       <Route
         path="/onboarding/*"
         element={
@@ -136,6 +137,19 @@ export default function App() {
       />
 
       <Route
+        path="/settings/integrations"
+        element={
+          <ProtectedRoute>
+            {user?.onboarding_completed ? (
+              <Integrations />
+            ) : (
+              <Navigate to="/onboarding" replace />
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/playground"
         element={
           <ProtectedRoute>
@@ -147,7 +161,7 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      
+
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

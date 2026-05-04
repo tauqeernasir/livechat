@@ -1,16 +1,17 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { 
-  Bot, 
-  LogOut, 
-  LayoutDashboard, 
-  Settings, 
-  MessageSquare, 
+import {
+  Bot,
+  LogOut,
+  LayoutDashboard,
+  Settings,
+  MessageSquare,
   Users,
   Database,
   ChevronRight,
-  Terminal
+  Terminal,
+  Plug
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -40,42 +41,47 @@ export default function Layout({ children, fullWidth = false }: LayoutProps) {
           </div>
 
           <nav className="space-y-1.5">
-            <SidebarLink 
-              to="/dashboard" 
-              icon={<LayoutDashboard className="w-5 h-5" />} 
-              label="Overview" 
+            <SidebarLink
+              to="/dashboard"
+              icon={<LayoutDashboard className="w-5 h-5" />}
+              label="Overview"
             />
-            <SidebarLink 
-              to="/chatbot" 
-              icon={<MessageSquare className="w-5 h-5" />} 
-              label="Agents" 
+            <SidebarLink
+              to="/chatbot"
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Agents"
             />
-            <SidebarLink 
-              to="/knowledge" 
-              icon={<Database className="w-5 h-5" />} 
-              label="Knowledge Base" 
+            <SidebarLink
+              to="/knowledge"
+              icon={<Database className="w-5 h-5" />}
+              label="Knowledge Base"
             />
-            <SidebarLink 
-              to="/playground" 
-              icon={<Terminal className="w-5 h-5" />} 
-              label="AI Playground" 
+            <SidebarLink
+              to="/playground"
+              icon={<Terminal className="w-5 h-5" />}
+              label="AI Playground"
             />
-            <SidebarLink 
-              to="/leads" 
-              icon={<Users className="w-5 h-5" />} 
-              label="Leads" 
+            <SidebarLink
+              to="/leads"
+              icon={<Users className="w-5 h-5" />}
+              label="Leads"
             />
           </nav>
 
           <div className="mt-10 mb-2 px-4">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Settings</span>
           </div>
-          
+
           <nav className="space-y-1.5">
-            <SidebarLink 
-              to="/settings/agent" 
-              icon={<Settings className="w-5 h-5" />} 
-              label="Agent Training" 
+            <SidebarLink
+              to="/settings/agent"
+              icon={<Settings className="w-5 h-5" />}
+              label="Agent Training"
+            />
+            <SidebarLink
+              to="/settings/integrations"
+              icon={<Plug className="w-5 h-5" />}
+              label="Integrations"
             />
           </nav>
         </div>
@@ -116,8 +122,8 @@ function SidebarLink({ to, icon, label }: { to: string, icon: React.ReactNode, l
       to={to}
       className={({ isActive }) => `
         flex items-center justify-between px-4 py-2.5 rounded-xl transition-all group
-        ${isActive 
-          ? 'bg-indigo-600/10 text-indigo-400 font-semibold border border-indigo-600/10' 
+        ${isActive
+          ? 'bg-indigo-600/10 text-indigo-400 font-semibold border border-indigo-600/10'
           : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
         }
       `}

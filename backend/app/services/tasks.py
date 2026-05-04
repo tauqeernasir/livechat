@@ -31,6 +31,19 @@ class TaskQueueService:
         logger.info("job_enqueued", source_id=source_id, job_id=job.job_id)
         return job.job_id
 
+    async def enqueue_integration_sync(self, integration_id: int, workspace_id: int):
+        """Enqueue a job to sync an integration's OpenAPI spec."""
+        pool = await self.get_pool()
+        job = await pool.enqueue_job(
+            "sync_integration_spec_task", integration_id, workspace_id
+        )
+        logger.info(
+            "integration_sync_job_enqueued",
+            integration_id=integration_id,
+            job_id=job.job_id,
+        )
+        return job.job_id
+
     async def close(self):
         """Close the pool."""
         if self._pool:
