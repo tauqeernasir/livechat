@@ -77,11 +77,6 @@ export default function Layout({ children, fullWidth = false }: LayoutProps) {
               label="Knowledge Base"
             />
             <SidebarLink
-              to="/playground"
-              icon={<Terminal className="w-5 h-5" />}
-              label="Playground"
-            />
-            <SidebarLink
               to="/leads"
               icon={<Users className="w-5 h-5" />}
               label="Leads"
@@ -107,6 +102,11 @@ export default function Layout({ children, fullWidth = false }: LayoutProps) {
               to="/settings/widget"
               icon={<Globe className="w-5 h-5" />}
               label="Chat Widget"
+            />
+            <SidebarLink
+              to="/playground"
+              icon={<Terminal className="w-5 h-5" />}
+              label="Playground"
             />
           </nav>
         </div>
