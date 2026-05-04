@@ -27,6 +27,7 @@ function Widget({ config }: { config: WidgetConfig }) {
                 primaryColor={config.primary_color}
                 iconUrl={config.icon_url}
                 isOpen={isOpen}
+                position={config.position}
             />
         </>
     );

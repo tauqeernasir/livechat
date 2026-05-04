@@ -7,9 +7,11 @@ interface Props {
     primaryColor: string;
     iconUrl: string | null;
     isOpen: boolean;
+    position?: string;
 }
 
-export function Bubble({ onClick, primaryColor, iconUrl, isOpen }: Props) {
+export function Bubble({ onClick, primaryColor, iconUrl, isOpen, position }: Props) {
+    const isLeft = position?.includes("left");
     return (
         <button
             onClick={onClick}
@@ -17,7 +19,7 @@ export function Bubble({ onClick, primaryColor, iconUrl, isOpen }: Props) {
             style={{
                 position: "fixed",
                 bottom: "20px",
-                right: "20px",
+                ...(isLeft ? { left: "20px" } : { right: "20px" }),
                 width: "56px",
                 height: "56px",
                 borderRadius: "50%",

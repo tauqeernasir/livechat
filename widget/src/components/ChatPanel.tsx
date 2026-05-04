@@ -96,7 +96,7 @@ export function ChatPanel({ config, onClose }: Props) {
             style={{
                 position: "fixed",
                 bottom: "88px",
-                right: "20px",
+                ...(config.position?.includes("left") ? { left: "20px" } : { right: "20px" }),
                 width: "380px",
                 maxWidth: "calc(100vw - 32px)",
                 height: "520px",

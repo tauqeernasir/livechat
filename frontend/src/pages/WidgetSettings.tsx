@@ -296,8 +296,8 @@ export default function WidgetSettings() {
                         <button
                             onClick={() => setLeadCaptureEnabled(!leadCaptureEnabled)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${leadCaptureEnabled
-                                    ? 'bg-green-500/10 text-green-400'
-                                    : 'bg-slate-800 text-slate-400'
+                                ? 'bg-green-500/10 text-green-400'
+                                : 'bg-slate-800 text-slate-400'
                                 }`}
                         >
                             {leadCaptureEnabled ? (
@@ -330,7 +330,7 @@ export default function WidgetSettings() {
                     <h2 className="text-lg font-semibold text-white mb-4">Preview</h2>
                     <div className="relative bg-slate-800 rounded-lg h-96 overflow-hidden">
                         {/* Mini preview of the widget */}
-                        <div className="absolute bottom-4 right-4 flex flex-col items-end gap-3">
+                        <div className={`absolute bottom-4 ${position === 'bottom-left' ? 'left-4' : 'right-4'} flex flex-col ${position === 'bottom-left' ? 'items-start' : 'items-end'} gap-3`}>
                             <div
                                 className="w-72 rounded-2xl overflow-hidden shadow-xl"
                                 style={{ border: `1px solid ${primaryColor}20` }}
