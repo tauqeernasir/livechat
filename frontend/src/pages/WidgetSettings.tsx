@@ -319,7 +319,7 @@ export default function WidgetSettings() {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-gray-900 dark:text-white rounded-lg text-sm font-medium transition-colors"
+                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
                     >
                         {saving ? 'Saving...' : 'Save Changes'}
                     </button>
@@ -336,26 +336,26 @@ export default function WidgetSettings() {
                                 style={{ border: `1px solid ${primaryColor}20` }}
                             >
                                 <div
-                                    className="px-4 py-3 text-gray-900 dark:text-white text-sm font-semibold"
+                                    className="px-4 py-3 text-white text-sm font-semibold"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     Chat
                                 </div>
-                                <div className="bg-white p-4 text-center text-gray-500 text-sm h-48 flex items-center justify-center">
+                                <div className="bg-white dark:bg-slate-900 p-4 text-center text-gray-500 dark:text-slate-400 text-sm h-48 flex items-center justify-center">
                                     {welcomeMessage || 'Hi! How can I help you today?'}
                                 </div>
-                                <div className="bg-white border-t px-3 py-2 flex items-center gap-2">
-                                    <div className="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-xs text-gray-400">
+                                <div className="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 px-3 py-2 flex items-center gap-2">
+                                    <div className="flex-1 bg-gray-100 dark:bg-slate-800 rounded-lg px-3 py-2 text-xs text-gray-400 dark:text-slate-500">
                                         {placeholderText || 'Type your message...'}
                                     </div>
                                     <div
-                                        className="px-3 py-2 rounded-lg text-gray-900 dark:text-white text-xs"
+                                        className="px-3 py-2 rounded-lg text-white text-xs"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         Send
                                     </div>
                                 </div>
-                                <div className="bg-white text-center py-1 text-[10px] text-gray-300 border-t">
+                                <div className="bg-white dark:bg-slate-900 text-center py-1 text-[10px] text-gray-300 dark:text-slate-600 border-t border-gray-200 dark:border-slate-800">
                                     Powered by Lagent
                                 </div>
                             </div>
@@ -363,7 +363,7 @@ export default function WidgetSettings() {
                                 className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
                                 style={{ backgroundColor: primaryColor }}
                             >
-                                <ExternalLink className="w-5 h-5 text-gray-900 dark:text-white" />
+                                <ExternalLink className="w-5 h-5 text-white" />
                             </div>
                         </div>
                     </div>
