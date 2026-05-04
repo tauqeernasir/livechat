@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { useTheme } from '../lib/theme';
 import {
   Bot,
   LogOut,
@@ -8,8 +9,11 @@ import {
   Settings,
   MessageSquare,
   Users,
+  Sun,
+  Moon,
   Database,
   ChevronRight,
+  ChevronUp,
   Terminal,
   Plug,
   Globe
@@ -22,7 +26,22 @@ interface LayoutProps {
 
 export default function Layout({ children, fullWidth = false }: LayoutProps) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    if (userMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [userMenuOpen]);
 
   const handleLogout = async () => {
     await logout();
@@ -92,23 +111,45 @@ export default function Layout({ children, fullWidth = false }: LayoutProps) {
           </nav>
         </div>
 
-        <div className="mt-auto p-6 border-t border-slate-800/50">
-          <div className="flex items-center gap-3 mb-6 px-2">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+        <div className="mt-auto p-6 border-t border-slate-800/50 relative">
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md shrink-0">
               {user?.username?.charAt(0).toUpperCase() || 'U'}
             </div>
             <div className="flex-grow min-w-0">
               <p className="text-sm font-semibold text-white truncate">{user?.username}</p>
               <p className="text-[11px] text-slate-500 truncate">{user?.email}</p>
             </div>
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors shrink-0"
+            >
+              <ChevronUp className={`w-4 h-4 transition-transform ${userMenuOpen ? '' : 'rotate-180'}`} />
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:text-rose-400 hover:bg-rose-400/5 rounded-xl transition-all text-sm font-medium group"
-          >
-            <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            Sign Out
-          </button>
+
+          {userMenuOpen && (
+            <div
+              ref={userMenuRef}
+              className="absolute bottom-full left-6 right-6 mb-2 bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-1 z-50"
+            >
+              <button
+                onClick={() => { toggleTheme(); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 transition-all text-sm font-medium"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              </button>
+              <div className="border-t border-slate-700 my-1" />
+              <button
+                onClick={() => { setUserMenuOpen(false); handleLogout(); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 transition-all text-sm font-medium group"
+              >
+                <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
