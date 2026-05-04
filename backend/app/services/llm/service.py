@@ -1,7 +1,9 @@
 """LLM service with retries, circular fallback, and optional structured output."""
 
 import asyncio
+import json
 import logging
+import re
 from typing import (
     Any,
     Callable,
@@ -334,6 +336,50 @@ class LLMService:
             logger.error("model_switch_failed", error=str(e))
             return False
 
+    @staticmethod
+    def _parse_structured_fallback(
+        result: Any,
+        response_format: Type[BaseModel],
+    ) -> BaseModel:
+        """Attempt to parse a structured output from raw message content.
+
+        When a provider doesn't populate the ``parsed`` field (or returns a
+        refusal), the JSON may still be present in the message content text.
+        This method extracts and validates it as a last resort.
+        """
+        content = getattr(result, "content", None) or ""
+        if not isinstance(content, str):
+            if isinstance(content, list):
+                content = " ".join(
+                    block.get("text", "") if isinstance(block, dict) else str(block)
+                    for block in content
+                )
+            else:
+                content = str(content)
+
+        # Try to extract JSON from the content (may be wrapped in markdown fences)
+        json_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", content)
+        text_to_parse = json_match.group(1).strip() if json_match else content.strip()
+
+        try:
+            parsed_data = json.loads(text_to_parse)
+            parsed = response_format.model_validate(parsed_data)
+            logger.info(
+                "structured_output_fallback_succeeded",
+                schema=response_format.__name__,
+            )
+            return parsed
+        except (json.JSONDecodeError, Exception) as e:
+            logger.error(
+                "structured_output_fallback_failed",
+                schema=response_format.__name__,
+                error=str(e),
+                content_preview=content[:200],
+            )
+            raise RuntimeError(
+                f"LLM did not return valid structured output and fallback parsing failed: {e}"
+            ) from e
+
     async def _call_with_fallback(
         self,
         messages: List[BaseMessage],
@@ -366,6 +412,9 @@ class LLMService:
                 base = LLMRegistry.get(LLMRegistry.LLMS[idx]["name"], **model_kwargs)
                 return base.with_structured_output(response_format) if response_format else base
 
+            def get_base_target(idx: int) -> Any:
+                return LLMRegistry.get(LLMRegistry.LLMS[idx]["name"], **model_kwargs)
+
             def advance(idx: int) -> Optional[int]:
                 return (idx + 1) % total
         else:
@@ -374,10 +423,31 @@ class LLMService:
             def get_target(_: int) -> Any:
                 return self._llm
 
+            def get_base_target(_: int) -> Any:
+                return self._llm
+
             def advance(_: int) -> Optional[int]:
                 return self._current_model_index if self._switch_to_next_model() else None
 
-        return await self._fallback_loop(messages, start, get_target, advance)
+        try:
+            result = await self._fallback_loop(messages, start, get_target, advance)
+        except Exception as e:
+            if response_format is None:
+                raise
+            # Structured output parser failed (e.g. no 'parsed'/'refusal' field).
+            # Retry with the base model and manually parse JSON from response text.
+            logger.warning(
+                "structured_output_chain_failed_retrying_with_base_model",
+                schema=response_format.__name__,
+                error=str(e),
+            )
+            raw_result = await self._fallback_loop(messages, start, get_base_target, advance)
+            return self._parse_structured_fallback(raw_result, response_format)
+
+        if response_format is not None and not isinstance(result, response_format):
+            result = self._parse_structured_fallback(result, response_format)
+
+        return result
 
     async def _fallback_loop(
         self,

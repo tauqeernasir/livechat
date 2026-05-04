@@ -31,8 +31,8 @@ class LLMRegistry:
                 model=settings.DEFAULT_LLM_MODEL,
                 api_key=settings.OPENAI_API_KEY,
                 max_tokens=settings.MAX_TOKENS,
-                reasoning={"effort": "high"},
-                base_url=settings.LLM_BASE_URL
+                base_url=settings.LLM_BASE_URL,
+                temperature=0
             ),
         },
         # {
@@ -98,6 +98,7 @@ class LLMRegistry:
                 model=model_name,
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.LLM_BASE_URL,
+                temperature=0,
                 **kwargs
             )
 

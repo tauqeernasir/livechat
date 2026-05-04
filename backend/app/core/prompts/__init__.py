@@ -37,9 +37,15 @@ def load_system_prompt(username: Optional[str] = None, **kwargs):
     )
 
 
-def load_classifier_prompt() -> str:
+def load_classifier_prompt(persona: Optional[str] = None) -> str:
     """Load the classifier prompt from the cached template."""
+    persona_context = (
+        f"\n# Agent Persona\n{persona}\n"
+        if persona
+        else ""
+    )
     return _CLASSIFIER_PROMPT_TEMPLATE.format(
         agent_name=settings.PROJECT_NAME + " Agent",
         current_date_and_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        persona_context=persona_context,
     )

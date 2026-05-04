@@ -138,14 +138,45 @@ class LangGraphAgent:
             )
 
         try:
-            classifier_prompt = load_classifier_prompt()
+            # Load persona from agent configuration for this workspace
+            persona = None
+            metadata = config.get("metadata", {})
+            workspace_id = metadata.get("workspace_id")
+            if workspace_id:
+                try:
+                    async with database_service.async_session_maker() as db_session:
+                        statement = select(AgentConfiguration).where(
+                            AgentConfiguration.workspace_id == int(workspace_id)
+                        )
+                        result = await db_session.execute(statement)
+                        agent_config = result.scalar_one_or_none()
+                        if agent_config and agent_config.persona:
+                            import re as _re
+                            persona = _re.sub(r"<[^>]*>", "", agent_config.persona)
+                except Exception as e:
+                    logger.warning("classifier_persona_load_failed", error=str(e))
+
+            classifier_prompt = load_classifier_prompt(persona=persona)
+
+            # Include last few messages for conversational context
+            recent_messages = []
+            for msg in state.messages[-4:]:
+                msg_type = getattr(msg, "type", None)
+                content = getattr(msg, "content", "")
+                if isinstance(msg, dict):
+                    msg_type = msg.get("type") or msg.get("role")
+                    content = msg.get("content", "")
+                if msg_type in ("human", "user"):
+                    recent_messages.append(HumanMessage(content=str(content)))
+                elif msg_type in ("ai", "assistant"):
+                    recent_messages.append(AIMessage(content=str(content)))
+
             classification = await self.llm_service.call(
                 [
                     SystemMessage(content=classifier_prompt),
-                    HumanMessage(content=latest_user_query),
+                    *recent_messages,
                 ],
                 response_format=QueryClassification,
-                temperature=0,
                 max_tokens=120,
                 reasoning={"effort": "low"},
             )
