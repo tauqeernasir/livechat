@@ -15,13 +15,13 @@ from fastapi import (
 )
 from fastapi.responses import StreamingResponse
 
-from app.api.v1.auth import get_current_session
 from app.core.config import settings
 from app.core.langgraph.graph import LangGraphAgent
 from app.core.limiter import limiter
 from app.core.logging import logger
 from app.core.metrics import llm_stream_duration_seconds
 from app.models.session import Session
+from app.models.user import User
 from app.schemas.chat import (
     ChatRequest,
     ChatResponse,
@@ -29,6 +29,12 @@ from app.schemas.chat import (
     StreamResponse,
 )
 from app.services.session_naming import maybe_name_session
+from app.api.v1.auth import get_current_user, get_current_session
+from app.services.database import database_service
+from app.utils.auth import create_access_token
+from app.utils.sanitization import sanitize_string
+from pydantic import BaseModel
+from datetime import datetime
 
 router = APIRouter()
 agent = LangGraphAgent()
@@ -202,3 +208,74 @@ async def clear_chat_history(
     except Exception as e:
         logger.exception("clear_chat_history_failed", session_id=session.id, error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class SessionInfo(BaseModel):
+    """Simplified session info for the history sidebar."""
+    id: str
+    name: str
+    created_at: datetime
+
+
+@router.get("/sessions/{workspace_id}", response_model=List[SessionInfo])
+async def list_workspace_sessions(
+    workspace_id: int,
+    user: User = Depends(get_current_user),
+):
+    """List all chat sessions for a specific workspace.
+
+    Args:
+        workspace_id: The ID of the workspace.
+        user: The current authenticated user.
+
+    Returns:
+        List[SessionInfo]: List of sessions in the workspace.
+    """
+    try:
+        sessions = await database_service.get_workspace_sessions(workspace_id, user.id)
+        return [
+            SessionInfo(
+                id=s.id,
+                name=s.name or "Untitled Chat",
+                created_at=s.created_at
+            )
+            for s in sessions
+        ]
+    except Exception as e:
+        logger.exception("list_sessions_failed", workspace_id=workspace_id, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to list sessions")
+
+
+@router.delete("/session/{session_id}")
+async def delete_session(
+    session_id: str,
+    user: User = Depends(get_current_user),
+):
+    """Delete a chat session and its history.
+
+    Args:
+        session_id: The ID of the session to delete.
+        user: The current authenticated user.
+
+    Returns:
+        dict: Success message.
+    """
+    try:
+        session_id = sanitize_string(session_id)
+        session = await database_service.get_session(session_id)
+        
+        if not session or session.user_id != user.id:
+            raise HTTPException(status_code=404, detail="Session not found")
+            
+        # 1. Clear history from LangGraph/Checkpoints
+        await agent.clear_chat_history(session_id)
+        
+        # 2. Delete session record from DB
+        await database_service.delete_session(session_id)
+        
+        return {"message": "Session deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("delete_session_failed", session_id=session_id, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to delete session")

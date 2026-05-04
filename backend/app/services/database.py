@@ -221,6 +221,26 @@ class DatabaseService:
             sessions = session.exec(statement).all()
             return sessions
 
+    async def get_workspace_sessions(self, workspace_id: int, user_id: int) -> List[ChatSession]:
+        """Get all sessions for a specific workspace and user.
+
+        Args:
+            workspace_id: The ID of the workspace
+            user_id: The ID of the user who owns the sessions
+
+        Returns:
+            List[ChatSession]: List of sessions in the workspace
+        """
+        with Session(self.engine) as session:
+            statement = (
+                select(ChatSession)
+                .where(ChatSession.workspace_id == workspace_id)
+                .where(ChatSession.user_id == user_id)
+                .order_by(ChatSession.created_at.desc())
+            )
+            sessions = session.exec(statement).all()
+            return sessions
+
     async def update_session_name(self, session_id: str, name: str) -> ChatSession:
         """Update a session's name.
 

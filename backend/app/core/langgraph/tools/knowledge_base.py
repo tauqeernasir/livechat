@@ -33,7 +33,9 @@ async def search_knowledge_base(query: str, config: RunnableConfig) -> str:
         
         formatted_results = []
         for i, res in enumerate(results, 1):
-            formatted_results.append(f"--- Result {i} (Source: {res['source']}) ---\n{res['text']}")
+            import os
+            source_name = os.path.basename(res['source'])
+            formatted_results.append(f"--- Result {i} (Source: {source_name}) ---\n{res['text']}")
         
         logger.info("knowledge_base_search_completed", workspace_id=workspace_id, query=query, results_count=len(results))
         return "\n\n".join(formatted_results)

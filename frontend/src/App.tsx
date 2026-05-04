@@ -6,6 +6,7 @@ import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import KnowledgeBase from './pages/KnowledgeBase';
 import AgentConfig from './pages/AgentConfig';
+import Playground from './pages/Playground';
 
 function LoadingSpinner() {
   return (
@@ -127,6 +128,19 @@ export default function App() {
           <ProtectedRoute>
             {user?.onboarding_completed ? (
               <AgentConfig />
+            ) : (
+              <Navigate to="/onboarding" replace />
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/playground"
+        element={
+          <ProtectedRoute>
+            {user?.onboarding_completed ? (
+              <Playground />
             ) : (
               <Navigate to="/onboarding" replace />
             )}

@@ -5,14 +5,19 @@ and token verification.
 """
 
 import uuid
-from typing import List
+from typing import (
+    List,
+    Optional,
+)
 
 from fastapi import (
     APIRouter,
     Depends,
     Form,
     HTTPException,
+    Header,
     Request,
+    status,
 )
 from fastapi.security import (
     HTTPAuthorizationCredentials,
@@ -117,60 +122,66 @@ async def get_current_user(
 
 async def get_current_session(
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    x_session_id: Optional[str] = Header(None, alias="X-Session-Id"),
 ) -> Session:
     """Get the current session from the token.
 
+    Supports two modes:
+    1. Direct Session Token: Token where 'sub' is the session_id and 'type' is 'session'.
+    2. User Token + Header: Token where 'type' is 'user' and 'X-Session-Id' header is provided.
+
     Args:
         credentials: The HTTP authorization credentials containing the JWT token.
+        x_session_id: Optional session ID provided in the header.
 
     Returns:
-        Session: The session extracted from the token.
+        Session: The session extracted or matched.
 
     Raises:
-        HTTPException: If the token is invalid, missing, or has the wrong type.
+        HTTPException: If the token is invalid, missing, or unauthorized.
     """
     try:
-        # Sanitize token
         token = sanitize_string(credentials.credentials)
-
         payload = verify_token(token)
         if payload is None:
-            logger.error("session_token_invalid", token_part=token[:10] + "...")
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid authentication credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
 
-        session_id = payload.get("sub")
         token_type = payload.get("type")
+        
+        # Mode 1: Direct Session Token
+        if token_type == "session":
+            session_id = sanitize_string(payload.get("sub"))
+            session = await db_service.get_session(session_id)
+            if session is None:
+                raise HTTPException(status_code=401, detail="Session not found")
+            bind_context(user_id=session.user_id)
+            return session
 
-        # Verify token type
-        if token_type != "session":
-            logger.error("invalid_token_type", expected="session", actual=token_type)
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid token type for this endpoint. Expected session token.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        # Mode 2: User Token + X-Session-Id Header
+        if token_type == "user" and x_session_id:
+            user_id = int(payload.get("sub"))
+            session_id = sanitize_string(x_session_id)
+            session = await db_service.get_session(session_id)
+            
+            if session is None:
+                raise HTTPException(status_code=401, detail="Session not found")
+                
+            if session.user_id != user_id:
+                logger.warning("unauthorized_session_access", user_id=user_id, session_id=session_id)
+                raise HTTPException(status_code=403, detail="Unauthorized access to this session")
+                
+            bind_context(user_id=user_id)
+            return session
 
-        # Sanitize session_id before using it
-        session_id = sanitize_string(session_id)
+        # Fallback error
+        if token_type == "user" and not x_session_id:
+            raise HTTPException(status_code=401, detail="Session ID header required for user tokens")
+            
+        raise HTTPException(status_code=401, detail="Invalid token type or missing session context")
 
-        # Verify session exists in database
-        session = await db_service.get_session(session_id)
-        if session is None:
-            logger.error("session_not_found", session_id=session_id)
-            raise HTTPException(
-                status_code=401,
-                detail="Session not found",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        # Bind user_id to logging context for all subsequent logs in this request
-        bind_context(user_id=session.user_id)
-
-        return session
+    except (ValueError, TypeError) as e:
+        logger.exception("session_auth_failed", error=str(e))
+        raise HTTPException(status_code=401, detail="Authentication failed")
     except ValueError as ve:
         logger.exception("token_validation_failed", error=str(ve))
         raise HTTPException(
@@ -303,6 +314,34 @@ async def get_me(
         organization_id=user.organization_id,
         workspace_id=workspace_id,
     )
+
+
+@router.get("/workspaces", response_model=List[dict])
+async def get_user_workspaces(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(database_service.get_async_session),
+):
+    """Get all workspaces for the current user's organization.
+
+    Args:
+        user: The authenticated user.
+        session: Database session.
+
+    Returns:
+        List[dict]: List of workspace objects (id and name).
+    """
+    if not user.organization_id:
+        return []
+
+    result = await session.execute(
+        select(Workspace).where(Workspace.org_id == user.organization_id)
+    )
+    workspaces = result.scalars().all()
+    
+    return [
+        {"id": ws.id, "name": ws.name}
+        for ws in workspaces
+    ]
 
 
 @router.post("/session", response_model=SessionResponse)

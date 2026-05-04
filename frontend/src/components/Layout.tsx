@@ -9,14 +9,16 @@ import {
   MessageSquare, 
   Users,
   Database,
-  ChevronRight
+  ChevronRight,
+  Terminal
 } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
+  fullWidth?: boolean;
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children, fullWidth = false }: LayoutProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -52,6 +54,11 @@ export default function Layout({ children }: LayoutProps) {
               to="/knowledge" 
               icon={<Database className="w-5 h-5" />} 
               label="Knowledge Base" 
+            />
+            <SidebarLink 
+              to="/playground" 
+              icon={<Terminal className="w-5 h-5" />} 
+              label="AI Playground" 
             />
             <SidebarLink 
               to="/leads" 
@@ -95,7 +102,7 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main Content Area */}
       <main className="flex-grow ml-64 min-h-screen">
-        <div className="max-w-7xl mx-auto px-8 py-10">
+        <div className={fullWidth ? 'h-screen' : 'max-w-7xl mx-auto px-8 py-10'}>
           {children}
         </div>
       </main>
