@@ -8,7 +8,8 @@ import {
     RefreshCw,
     ToggleLeft,
     ToggleRight,
-    ExternalLink,
+    MessageSquareIcon,
+    SendIcon
 } from 'lucide-react';
 
 interface WidgetConfig {
@@ -363,7 +364,7 @@ export default function WidgetSettings() {
                                 className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
                                 style={{ backgroundColor: primaryColor }}
                             >
-                                <ExternalLink className="w-5 h-5 text-white" />
+                                <MessageSquareIcon className="w-5 h-5 text-white" />
                             </div>
                         </div>
                     </div>
