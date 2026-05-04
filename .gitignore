@@ -15,6 +15,11 @@ frontend/.env.development.local
 frontend/.env.test.local
 frontend/.env.production.local
 
+widget/node_modules/
+widget/dist/
+widget/.env
+widget/.env.local
+
 # IDEs
 .vscode/
 .idea/

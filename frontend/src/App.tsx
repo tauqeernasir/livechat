@@ -8,6 +8,7 @@ import KnowledgeBase from './pages/KnowledgeBase';
 import AgentConfig from './pages/AgentConfig';
 import Integrations from './pages/Integrations';
 import Playground from './pages/Playground';
+import WidgetSettings from './pages/WidgetSettings';
 
 function LoadingSpinner() {
   return (
@@ -162,8 +163,22 @@ export default function App() {
         }
       />
 
+      <Route
+        path="/settings/widget"
+        element={
+          <ProtectedRoute>
+            {user?.onboarding_completed ? (
+              <WidgetSettings />
+            ) : (
+              <Navigate to="/onboarding" replace />
+            )}
+          </ProtectedRoute>
+        }
+      />
+
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
+

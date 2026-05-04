@@ -20,14 +20,16 @@ from app.utils.sanitization import sanitize_string
 
 
 def create_access_token(
-    subject: str, token_type: str = "session", expires_delta: Optional[timedelta] = None
+    subject: str, token_type: str = "session", expires_delta: Optional[timedelta] = None,
+    extra_claims: Optional[dict] = None,
 ) -> Token:
     """Create a new access token.
 
     Args:
         subject: The unique subject ID (user ID or session ID).
-        token_type: The type of token ("user" or "session").
+        token_type: The type of token ("user", "session", or "widget_session").
         expires_delta: Optional expiration time delta.
+        extra_claims: Optional additional claims to embed in the JWT.
 
     Returns:
         Token: The generated access token.
@@ -44,6 +46,9 @@ def create_access_token(
         "iat": datetime.now(UTC),
         "jti": sanitize_string(f"{subject}-{datetime.now(UTC).timestamp()}"),  # Add unique token identifier
     }
+
+    if extra_claims:
+        to_encode.update(extra_claims)
 
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 

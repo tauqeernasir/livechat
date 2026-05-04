@@ -18,6 +18,8 @@ from app.models.organization import Organization  # noqa: F401
 from app.models.workspace import Workspace  # noqa: F401
 from app.models.knowledge import KnowledgeSource, DocumentChunk  # noqa: F401
 from app.models.agent_config import AgentConfiguration  # noqa: F401
+from app.models.widget_config import WidgetConfig  # noqa: F401
+from app.models.lead import Lead  # noqa: F401
 
 # Alembic Config object
 config = context.config

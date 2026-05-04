@@ -9,6 +9,8 @@ from app.models.thread import Thread
 from app.models.knowledge import KnowledgeSource, DocumentChunk
 from app.models.agent_config import AgentConfiguration
 from app.models.integration import Integration, IntegrationOperation
+from app.models.widget_config import WidgetConfig
+from app.models.lead import Lead
 
 __all__ = [
     "BaseModel",
@@ -22,4 +24,6 @@ __all__ = [
     "AgentConfiguration",
     "Integration",
     "IntegrationOperation",
+    "WidgetConfig",
+    "Lead",
 ]

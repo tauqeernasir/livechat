@@ -16,6 +16,7 @@ from fastapi import (
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -161,6 +162,17 @@ app.add_middleware(
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Serve widget static files (embed.js + built widget bundle)
+import os as _os
+
+_widget_dist = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))), "widget", "dist")
+_widget_loader = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))), "widget", "src")
+if _os.path.isdir(_widget_dist):
+    app.mount("/widget", StaticFiles(directory=_widget_dist), name="widget-dist")
+elif _os.path.isdir(_widget_loader):
+    # Fallback: serve loader from src during development
+    app.mount("/widget", StaticFiles(directory=_widget_loader), name="widget-src")
 
 
 @app.get("/")

@@ -11,7 +11,8 @@ import {
   Database,
   ChevronRight,
   Terminal,
-  Plug
+  Plug,
+  Globe
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -82,6 +83,11 @@ export default function Layout({ children, fullWidth = false }: LayoutProps) {
               to="/settings/integrations"
               icon={<Plug className="w-5 h-5" />}
               label="Integrations"
+            />
+            <SidebarLink
+              to="/settings/widget"
+              icon={<Globe className="w-5 h-5" />}
+              label="Chat Widget"
             />
           </nav>
         </div>
