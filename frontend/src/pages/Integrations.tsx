@@ -265,7 +265,7 @@ export default function Integrations() {
                     </div>
                     <button
                         onClick={() => setIsCreateOpen(true)}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-gray-900 dark:text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-600/20"
+                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-600/20"
                     >
                         <Plus className="w-4 h-4" />
                         Connect API
@@ -280,7 +280,7 @@ export default function Integrations() {
                         placeholder="Search integrations..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-4 text-gray-900 dark:text-white placeholder:text-gray-300 dark:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
+                        className="w-full bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-4 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
                     />
                 </div>
 
@@ -346,7 +346,7 @@ export default function Integrations() {
                                         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Connect API</h2>
                                         <p className="text-sm text-gray-400 dark:text-slate-500">Provide an OpenAPI spec to register callable endpoints.</p>
                                     </div>
-                                    <button onClick={() => { setIsCreateOpen(false); resetCreateForm(); }} className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white transition-colors">
+                                    <button onClick={() => { setIsCreateOpen(false); resetCreateForm(); }} className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                                         <Plus className="w-6 h-6 rotate-45" />
                                     </button>
                                 </header>
@@ -360,7 +360,7 @@ export default function Integrations() {
                                             placeholder="e.g. Order Service"
                                             value={createName}
                                             onChange={(e) => setCreateName(e.target.value)}
-                                            className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-300 dark:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
+                                            className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
                                         />
                                     </div>
 
@@ -371,8 +371,8 @@ export default function Integrations() {
                                             <button
                                                 onClick={() => setCreateSpecMode('url')}
                                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${createSpecMode === 'url'
-                                                        ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-600/30'
-                                                        : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-300 dark:border-slate-700 hover:bg-gray-200 dark:hover:bg-slate-700'
+                                                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-600/30'
+                                                    : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-300 dark:border-slate-700 hover:bg-gray-200 dark:hover:bg-slate-700'
                                                     }`}
                                             >
                                                 <Link2 className="w-4 h-4" />
@@ -381,8 +381,8 @@ export default function Integrations() {
                                             <button
                                                 onClick={() => setCreateSpecMode('json')}
                                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${createSpecMode === 'json'
-                                                        ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-600/30'
-                                                        : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-300 dark:border-slate-700 hover:bg-gray-200 dark:hover:bg-slate-700'
+                                                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-600/30'
+                                                    : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-300 dark:border-slate-700 hover:bg-gray-200 dark:hover:bg-slate-700'
                                                     }`}
                                             >
                                                 <FileJson className="w-4 h-4" />
@@ -395,7 +395,7 @@ export default function Integrations() {
                                                 placeholder="https://api.example.com/openapi.json"
                                                 value={createSpecUrl}
                                                 onChange={(e) => setCreateSpecUrl(e.target.value)}
-                                                className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-300 dark:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
+                                                className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
                                             />
                                         ) : (
                                             <textarea
@@ -403,7 +403,7 @@ export default function Integrations() {
                                                 value={createSpecJson}
                                                 onChange={(e) => setCreateSpecJson(e.target.value)}
                                                 rows={10}
-                                                className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-300 dark:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all font-mono text-sm resize-none"
+                                                className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all font-mono text-sm resize-none"
                                             />
                                         )}
                                     </div>
@@ -433,7 +433,7 @@ export default function Integrations() {
                                                         placeholder="X-API-Key"
                                                         value={createAuthHeader}
                                                         onChange={(e) => setCreateAuthHeader(e.target.value)}
-                                                        className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-300 dark:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
+                                                        className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
                                                     />
                                                 </div>
                                             )}
@@ -446,7 +446,7 @@ export default function Integrations() {
                                                     placeholder="••••••••••••••••"
                                                     value={createCredentials}
                                                     onChange={(e) => setCreateCredentials(e.target.value)}
-                                                    className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-300 dark:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
+                                                    className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
                                                 />
                                             </div>
                                         </>
@@ -462,7 +462,7 @@ export default function Integrations() {
                                             placeholder="https://api.example.com/v1"
                                             value={createBaseUrl}
                                             onChange={(e) => setCreateBaseUrl(e.target.value)}
-                                            className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-300 dark:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
+                                            className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 transition-all"
                                         />
                                     </div>
 
@@ -477,14 +477,14 @@ export default function Integrations() {
                                 <footer className="p-6 border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex gap-3">
                                     <button
                                         onClick={() => { setIsCreateOpen(false); resetCreateForm(); }}
-                                        className="flex-grow py-3 rounded-xl font-bold text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-slate-800 transition-all"
+                                        className="flex-grow py-3 rounded-xl font-bold text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={handleCreate}
                                         disabled={isCreating || !createName || (createSpecMode === 'url' ? !createSpecUrl : !createSpecJson)}
-                                        className="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-gray-900 dark:text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        className="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
                                         {isCreating ? (
                                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -599,14 +599,14 @@ function IntegrationCard({
                     <button
                         onClick={onToggle}
                         title={integration.enabled ? 'Disable' : 'Enable'}
-                        className={`p-2 transition-colors ${integration.enabled ? 'text-emerald-400 hover:text-emerald-300' : 'text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:text-slate-400'}`}
+                        className={`p-2 transition-colors ${integration.enabled ? 'text-emerald-400 hover:text-emerald-300' : 'text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400'}`}
                     >
                         {integration.enabled ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
                     </button>
                     <button
                         onClick={onStartEdit}
                         title="Edit"
-                        className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:text-white transition-colors"
+                        className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
                         <ExternalLink className="w-4 h-4" />
                     </button>
@@ -619,7 +619,7 @@ function IntegrationCard({
                     </button>
                     <button
                         onClick={onToggleExpand}
-                        className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:text-white transition-colors"
+                        className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
                         {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </button>
@@ -628,7 +628,7 @@ function IntegrationCard({
 
             {/* Edit Panel */}
             {isEditing && (
-                <div className="px-6 pb-5 border-t border-gray-200 dark:border-gray-200 dark:border-slate-800/50 pt-5 space-y-4">
+                <div className="px-6 pb-5 border-t border-gray-200 dark:border-slate-800/50 pt-5 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-gray-500 dark:text-slate-400">Name</label>
@@ -672,7 +672,7 @@ function IntegrationCard({
                                         placeholder="Leave blank to keep current"
                                         value={editCredentials}
                                         onChange={(e) => setEditCredentials(e.target.value)}
-                                        className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg py-2 px-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-300 dark:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20"
+                                        className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg py-2 px-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20"
                                     />
                                 </div>
                             </>
@@ -690,14 +690,14 @@ function IntegrationCard({
                     <div className="flex justify-end gap-2 pt-2">
                         <button
                             onClick={onCancelEdit}
-                            className="px-4 py-2 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-slate-800 rounded-lg transition-all"
+                            className="px-4 py-2 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={onSaveEdit}
                             disabled={isSaving}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-gray-900 dark:text-white rounded-lg transition-all disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all disabled:opacity-50"
                         >
                             {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                             Save
@@ -708,7 +708,7 @@ function IntegrationCard({
 
             {/* Operations Table */}
             {isExpanded && integration.operations.length > 0 && (
-                <div className="border-t border-gray-200 dark:border-gray-200 dark:border-slate-800/50">
+                <div className="border-t border-gray-200 dark:border-slate-800/50">
                     <div className="px-6 py-3 bg-gray-100 dark:bg-slate-800/20 flex items-center justify-between">
                         <span className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Endpoints</span>
                         <div className="flex items-center gap-2">
@@ -721,15 +721,15 @@ function IntegrationCard({
                             <span className="text-gray-300 dark:text-slate-700">|</span>
                             <button
                                 onClick={() => onToggleAllOperations(false)}
-                                className="text-[11px] font-medium text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:text-slate-300 transition-colors"
+                                className="text-[11px] font-medium text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
                             >
                                 Disable All
                             </button>
                         </div>
                     </div>
-                    <div className="divide-y divide-slate-800/50">
+                    <div className="divide-y divide-gray-200 dark:divide-slate-800/50">
                         {integration.operations.map((op) => (
-                            <div key={op.id} className="px-6 py-3 flex items-center justify-between hover:bg-gray-100 dark:bg-slate-800/20 transition-colors">
+                            <div key={op.id} className="px-6 py-3 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-slate-800/20 transition-colors">
                                 <div className="flex items-center gap-3 min-w-0">
                                     <MethodBadge method={op.method} />
                                     <span className="text-sm text-gray-600 dark:text-slate-300 font-mono truncate">{op.path}</span>
