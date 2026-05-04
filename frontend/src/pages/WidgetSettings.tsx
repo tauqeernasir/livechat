@@ -147,8 +147,8 @@ export default function WidgetSettings() {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">Chat Widget</h1>
-                        <p className="text-sm text-slate-400 mt-1">
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Chat Widget</h1>
+                        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
                             Embed a chat widget on your website to let visitors talk to your AI agent.
                         </p>
                     </div>
@@ -176,30 +176,30 @@ export default function WidgetSettings() {
                 )}
 
                 {/* Embed Code */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                    <h2 className="text-lg font-semibold text-white mb-3">Embed Code</h2>
-                    <p className="text-sm text-slate-400 mb-4">
+                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Embed Code</h2>
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
                         Copy and paste this script tag into your website's HTML, right before the closing{' '}
                         <code className="text-indigo-400">&lt;/body&gt;</code> tag.
                     </p>
                     <div className="flex items-center gap-2">
-                        <code className="flex-1 bg-slate-800 px-4 py-3 rounded-lg text-sm text-green-400 font-mono overflow-x-auto">
+                        <code className="flex-1 bg-gray-100 dark:bg-slate-800 px-4 py-3 rounded-lg text-sm text-green-400 font-mono overflow-x-auto">
                             {`<script src="${window.location.origin}/widget/embed.js?key=${config?.widget_key}"></script>`}
                         </code>
                         <button
                             onClick={copyEmbedCode}
-                            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+                            className="p-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
                         >
                             {copied ? (
                                 <Check className="w-5 h-5 text-green-400" />
                             ) : (
-                                <Copy className="w-5 h-5 text-slate-400" />
+                                <Copy className="w-5 h-5 text-gray-500 dark:text-slate-400" />
                             )}
                         </button>
                     </div>
                     <div className="mt-3 flex items-center gap-4">
-                        <span className="text-xs text-slate-500">
-                            Key: <code className="text-slate-400">{config?.widget_key}</code>
+                        <span className="text-xs text-gray-400 dark:text-slate-500">
+                            Key: <code className="text-gray-500 dark:text-slate-400">{config?.widget_key}</code>
                         </span>
                         <button
                             onClick={handleRotateKey}
@@ -212,11 +212,11 @@ export default function WidgetSettings() {
                 </div>
 
                 {/* Customization */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                    <h2 className="text-lg font-semibold text-white mb-6">Appearance</h2>
+                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Appearance</h2>
                     <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">
                                 Primary Color
                             </label>
                             <div className="flex items-center gap-3">
@@ -224,25 +224,25 @@ export default function WidgetSettings() {
                                     type="color"
                                     value={primaryColor}
                                     onChange={(e) => setPrimaryColor(e.target.value)}
-                                    className="w-10 h-10 rounded-lg border border-slate-700 cursor-pointer"
+                                    className="w-10 h-10 rounded-lg border border-gray-300 dark:border-slate-700 cursor-pointer"
                                 />
                                 <input
                                     type="text"
                                     value={primaryColor}
                                     onChange={(e) => setPrimaryColor(e.target.value)}
-                                    className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                                    className="flex-1 bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">
                                 Position
                             </label>
                             <select
                                 value={position}
                                 onChange={(e) => setPosition(e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                                className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white"
                             >
                                 <option value="bottom-right">Bottom Right</option>
                                 <option value="bottom-left">Bottom Left</option>
@@ -250,54 +250,54 @@ export default function WidgetSettings() {
                         </div>
 
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">
                                 Welcome Message
                             </label>
                             <input
                                 type="text"
                                 value={welcomeMessage}
                                 onChange={(e) => setWelcomeMessage(e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                                className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white"
                             />
                         </div>
 
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">
                                 Placeholder Text
                             </label>
                             <input
                                 type="text"
                                 value={placeholderText}
                                 onChange={(e) => setPlaceholderText(e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                                className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white"
                             />
                         </div>
 
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">
                                 Allowed Origins{' '}
-                                <span className="text-slate-500">(comma-separated, leave empty for any)</span>
+                                <span className="text-gray-400 dark:text-slate-500">(comma-separated, leave empty for any)</span>
                             </label>
                             <input
                                 type="text"
                                 value={allowedOrigins}
                                 onChange={(e) => setAllowedOrigins(e.target.value)}
                                 placeholder="https://example.com, https://app.example.com"
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                                className="w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Lead Capture */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-white">Lead Capture</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Lead Capture</h2>
                         <button
                             onClick={() => setLeadCaptureEnabled(!leadCaptureEnabled)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${leadCaptureEnabled
                                 ? 'bg-green-500/10 text-green-400'
-                                : 'bg-slate-800 text-slate-400'
+                                : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400'
                                 }`}
                         >
                             {leadCaptureEnabled ? (
@@ -308,7 +308,7 @@ export default function WidgetSettings() {
                             {leadCaptureEnabled ? 'Enabled' : 'Disabled'}
                         </button>
                     </div>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-gray-500 dark:text-slate-400">
                         When enabled, visitors must enter their email before chatting. Leads are saved to your
                         dashboard.
                     </p>
@@ -319,16 +319,16 @@ export default function WidgetSettings() {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-gray-900 dark:text-white rounded-lg text-sm font-medium transition-colors"
                     >
                         {saving ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>
 
                 {/* Live Preview */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                    <h2 className="text-lg font-semibold text-white mb-4">Preview</h2>
-                    <div className="relative bg-slate-800 rounded-lg h-96 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Preview</h2>
+                    <div className="relative bg-gray-100 dark:bg-slate-800 rounded-lg h-96 overflow-hidden">
                         {/* Mini preview of the widget */}
                         <div className={`absolute bottom-4 ${position === 'bottom-left' ? 'left-4' : 'right-4'} flex flex-col ${position === 'bottom-left' ? 'items-start' : 'items-end'} gap-3`}>
                             <div
@@ -336,7 +336,7 @@ export default function WidgetSettings() {
                                 style={{ border: `1px solid ${primaryColor}20` }}
                             >
                                 <div
-                                    className="px-4 py-3 text-white text-sm font-semibold"
+                                    className="px-4 py-3 text-gray-900 dark:text-white text-sm font-semibold"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     Chat
@@ -349,7 +349,7 @@ export default function WidgetSettings() {
                                         {placeholderText || 'Type your message...'}
                                     </div>
                                     <div
-                                        className="px-3 py-2 rounded-lg text-white text-xs"
+                                        className="px-3 py-2 rounded-lg text-gray-900 dark:text-white text-xs"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         Send
@@ -363,7 +363,7 @@ export default function WidgetSettings() {
                                 className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
                                 style={{ backgroundColor: primaryColor }}
                             >
-                                <ExternalLink className="w-5 h-5 text-white" />
+                                <ExternalLink className="w-5 h-5 text-gray-900 dark:text-white" />
                             </div>
                         </div>
                     </div>

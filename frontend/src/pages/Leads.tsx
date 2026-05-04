@@ -57,19 +57,19 @@ export default function Leads() {
         <Layout>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Leads</h1>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leads</h1>
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
                         Contacts captured from your chat widget.
                     </p>
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden">
                     {loading ? (
                         <div className="flex items-center justify-center py-20">
                             <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                         </div>
                     ) : leads.length === 0 ? (
-                        <div className="text-center py-20 text-slate-500">
+                        <div className="text-center py-20 text-gray-400 dark:text-slate-500">
                             <Mail className="w-10 h-10 mx-auto mb-3 opacity-50" />
                             <p className="text-sm">No leads captured yet.</p>
                             <p className="text-xs mt-1">
@@ -79,39 +79,39 @@ export default function Leads() {
                     ) : (
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-slate-800">
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                                <tr className="border-b border-gray-200 dark:border-slate-800">
+                                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                                         Email
                                     </th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                                         Name
                                     </th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                                         Captured
                                     </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800/50">
                                 {leads.map((lead) => (
-                                    <tr key={lead.id} className="hover:bg-slate-800/30 transition-colors">
+                                    <tr key={lead.id} className="hover:bg-gray-100 dark:bg-slate-800/30 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <Mail className="w-4 h-4 text-indigo-400" />
-                                                <span className="text-sm text-white">{lead.email}</span>
+                                                <span className="text-sm text-gray-900 dark:text-white">{lead.email}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <User className="w-4 h-4 text-slate-500" />
-                                                <span className="text-sm text-slate-300">
+                                                <User className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+                                                <span className="text-sm text-gray-600 dark:text-slate-300">
                                                     {lead.name || '—'}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <Clock className="w-4 h-4 text-slate-500" />
-                                                <span className="text-sm text-slate-400">
+                                                <Clock className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+                                                <span className="text-sm text-gray-500 dark:text-slate-400">
                                                     {formatDate(lead.created_at)}
                                                 </span>
                                             </div>
@@ -124,24 +124,24 @@ export default function Leads() {
 
                     {/* Pagination */}
                     {leads.length > 0 && (
-                        <div className="flex items-center justify-between px-6 py-3 border-t border-slate-800">
-                            <span className="text-xs text-slate-500">
+                        <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 dark:border-slate-800">
+                            <span className="text-xs text-gray-400 dark:text-slate-500">
                                 Page {page + 1}
                             </span>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => setPage((p) => Math.max(0, p - 1))}
                                     disabled={page === 0}
-                                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                    className="p-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                 >
-                                    <ChevronLeft className="w-4 h-4 text-slate-300" />
+                                    <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-slate-300" />
                                 </button>
                                 <button
                                     onClick={() => setPage((p) => p + 1)}
                                     disabled={leads.length < pageSize}
-                                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                    className="p-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                 >
-                                    <ChevronRight className="w-4 h-4 text-slate-300" />
+                                    <ChevronRight className="w-4 h-4 text-gray-600 dark:text-slate-300" />
                                 </button>
                             </div>
                         </div>
