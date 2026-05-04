@@ -232,7 +232,7 @@ export default function Playground() {
           <div className="p-4 border-b border-gray-200 dark:border-slate-900">
             <button
               onClick={createNewSession}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-gray-900 dark:text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/10"
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/10"
             >
               <Plus className="w-5 h-5" />
               New Chat
@@ -257,7 +257,7 @@ export default function Playground() {
                   onClick={() => selectSession(session.id)}
                   className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border ${activeSessionId === session.id
                     ? 'bg-indigo-600/10 border-indigo-500/30 text-gray-900 dark:text-white'
-                    : 'bg-transparent border-transparent text-gray-500 dark:text-slate-400 hover:bg-white dark:bg-slate-900 hover:text-gray-700 dark:text-slate-200'
+                    : 'bg-transparent border-transparent text-gray-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-900 hover:text-gray-700 dark:hover:text-slate-200'
                     }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -322,7 +322,7 @@ export default function Playground() {
                 {!activeSessionId && (
                   <button
                     onClick={createNewSession}
-                    className="flex items-center gap-2 bg-white dark:bg-slate-900 hover:bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white font-semibold px-6 py-3 rounded-xl border border-gray-200 dark:border-slate-800 transition-all"
+                    className="flex items-center gap-2 bg-white dark:bg-slate-900 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-900 dark:text-white font-semibold px-6 py-3 rounded-xl border border-gray-200 dark:border-slate-800 transition-all"
                   >
                     <Plus className="w-4 h-4" />
                     Start Session
@@ -334,7 +334,7 @@ export default function Playground() {
                 {messages.map((msg, idx) => (
                   <div key={idx} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'assistant'
-                      ? 'bg-indigo-600 text-gray-900 dark:text-white shadow-indigo-600/10'
+                      ? 'bg-indigo-600 text-white shadow-indigo-600/10'
                       : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400'
                       }`}>
                       {msg.role === 'assistant' ? <Bot className="w-5 h-5" /> : <UserIcon className="w-5 h-5" />}
@@ -342,7 +342,7 @@ export default function Playground() {
                     <div className={`flex flex-col max-w-[80%] ${msg.role === 'user' ? 'items-end' : ''}`}>
                       <div className={`px-5 py-4 rounded-2xl whitespace-pre-wrap text-sm leading-relaxed ${msg.role === 'assistant'
                         ? 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-200'
-                        : 'bg-indigo-600 text-gray-900 dark:text-white shadow-lg shadow-indigo-600/10'
+                        : 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/10'
                         }`}>
                         {msg.content}
 
@@ -398,7 +398,7 @@ export default function Playground() {
                 <button
                   onClick={handleSend}
                   disabled={!input.trim() || !activeSessionId || isStreaming}
-                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white p-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:bg-gray-200 dark:disabled:bg-slate-800 text-white p-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
                 >
                   {isStreaming ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                 </button>

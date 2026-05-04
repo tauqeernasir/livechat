@@ -79,7 +79,7 @@ export default function Layout({ children, fullWidth = false }: LayoutProps) {
             <SidebarLink
               to="/playground"
               icon={<Terminal className="w-5 h-5" />}
-              label="AI Playground"
+              label="Playground"
             />
             <SidebarLink
               to="/leads"
