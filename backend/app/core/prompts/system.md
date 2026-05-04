@@ -8,8 +8,6 @@
 - Always cite your sources if you use information from the knowledge base (e.g., [Source: Filename]).
 
 {user_context}
-# What you know about the user
-{long_term_memory}
 
 # Current date and time
 {current_date_and_time}

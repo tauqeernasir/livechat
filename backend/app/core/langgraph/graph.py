@@ -49,7 +49,6 @@ from app.schemas import (
 )
 from app.services.database import database_service
 from app.services.llm import llm_service
-from app.services.memory import memory_service
 from app.utils import (
     dump_messages,
     extract_text_content,
@@ -158,7 +157,6 @@ class LangGraphAgent:
 
         SYSTEM_PROMPT = load_system_prompt(
             username=username, 
-            long_term_memory=state.long_term_memory,
             persona=persona,
             fallback_rule=fallback_rule
         )
@@ -305,11 +303,7 @@ class LangGraphAgent:
         }
 
         try:
-            # Run state check and memory search concurrently to save 200-500ms
-            state, relevant_memory = await asyncio.gather(
-                self._graph.aget_state(config),
-                memory_service.search(user_id, messages[-1].content),
-            )
+            state = await self._graph.aget_state(config)
 
             if state.next:
                 logger.info("resuming_interrupted_graph", session_id=session_id, next_nodes=state.next)
@@ -318,9 +312,8 @@ class LangGraphAgent:
                     config=config,
                 )
             else:
-                relevant_memory = relevant_memory or "No relevant memory found."
                 response = await self._graph.ainvoke(
-                    input={"messages": dump_messages(messages), "long_term_memory": relevant_memory},
+                    input={"messages": dump_messages(messages)},
                     config=config,
                 )
 
@@ -331,9 +324,6 @@ class LangGraphAgent:
                 logger.info("graph_interrupted", session_id=session_id, interrupt_value=str(interrupt_value))
                 return [Message(role="assistant", content=str(interrupt_value))]
 
-            asyncio.create_task(
-                memory_service.add(user_id, convert_to_openai_messages(response["messages"]), config["metadata"])
-            )
             return self.__process_messages(response["messages"])
         except GraphInterrupt:
             state = await self._graph.aget_state(config)
@@ -380,18 +370,13 @@ class LangGraphAgent:
             self._graph = await self.create_graph()
 
         try:
-            # Run state check and memory search concurrently to save 200-500ms
-            state, relevant_memory = await asyncio.gather(
-                self._graph.aget_state(config),
-                memory_service.search(user_id, messages[-1].content),
-            )
+            state = await self._graph.aget_state(config)
 
             if state.next:
                 logger.info("resuming_interrupted_graph_stream", session_id=session_id, next_nodes=state.next)
                 graph_input = Command(resume=messages[-1].content)
             else:
-                relevant_memory = relevant_memory or "No relevant memory found."
-                graph_input = {"messages": dump_messages(messages), "long_term_memory": relevant_memory}
+                graph_input = {"messages": dump_messages(messages)}
 
             async for token, _ in self._graph.astream(
                 graph_input,
@@ -405,18 +390,12 @@ class LangGraphAgent:
                 if text:
                     yield text
 
-            # After streaming completes, check for interrupt or update memory
+            # After streaming completes, check for interrupt
             state = await self._graph.aget_state(config)
             if state.next:
                 interrupt_value = state.tasks[0].interrupts[0].value if state.tasks else "Waiting for input."
                 logger.info("graph_interrupted_stream", session_id=session_id, interrupt_value=str(interrupt_value))
                 yield str(interrupt_value)
-            elif state.values and "messages" in state.values:
-                asyncio.create_task(
-                    memory_service.add(
-                        user_id, convert_to_openai_messages(state.values["messages"]), config["metadata"]
-                    )
-                )
         except GraphInterrupt:
             state = await self._graph.aget_state(config)
             interrupt_value = state.tasks[0].interrupts[0].value if state.tasks else "Waiting for input."
