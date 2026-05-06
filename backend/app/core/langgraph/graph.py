@@ -166,9 +166,10 @@ class LangGraphAgent:
 
             classifier_prompt = load_classifier_prompt(persona=persona)
 
-            # Include last few messages for conversational context
+            # Include enough recent turns so short follow-up answers stay anchored
+            # to the active support or sales thread during classification.
             recent_messages = []
-            for msg in state.messages[-4:]:
+            for msg in state.messages[-8:]:
                 msg_type = getattr(msg, "type", None)
                 content = getattr(msg, "content", "")
                 if isinstance(msg, dict):
