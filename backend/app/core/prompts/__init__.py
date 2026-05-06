@@ -21,7 +21,7 @@ with open(os.path.join(_PROMPTS_DIR, "classifier.md"), "r") as _f:
 
 def load_system_prompt(username: Optional[str] = None, **kwargs):
     """Load the system prompt from the cached template."""
-    user_context = f"# User\nYou are talking to {username}.\n" if username else ""
+    user_context = f"# User\nUser name: {username}.\n" if username else ""
     
     # Provide defaults for agent customization
     persona = kwargs.get("persona") or "A world class assistant"

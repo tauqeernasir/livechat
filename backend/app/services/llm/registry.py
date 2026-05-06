@@ -1,5 +1,6 @@
-"""LLM model registry with pre-initialized instances."""
+"""LLM model registry with provider-aware model initialization."""
 
+import os
 from typing import (
     Any,
     Dict,
@@ -8,9 +9,9 @@ from typing import (
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_openai import ChatOpenAI
+from langchain_qwq import ChatQwen
 
 from app.core.config import (
-    Environment,
     settings,
 )
 from app.core.logging import logger
@@ -23,51 +24,74 @@ class LLMRegistry:
     methods to retrieve them by name with optional argument overrides.
     """
 
-    # TODO: let's keep only 1 LLM for now - will uncomment once done development
-    LLMS: List[Dict[str, Any]] = [
-        {
-            "name": settings.DEFAULT_LLM_MODEL,
-            "llm": ChatOpenAI(
-                model=settings.DEFAULT_LLM_MODEL,
-                api_key=settings.OPENAI_API_KEY,
-                max_tokens=settings.MAX_TOKENS,
-                base_url=settings.LLM_BASE_URL,
-                temperature=0
-            ),
-        },
-        # {
-        #     "name": "gpt-5.4",
-        #     "llm": ChatOpenAI(
-        #         model="gpt-5",
-        #         api_key=settings.OPENAI_API_KEY,
-        #         max_tokens=settings.MAX_TOKENS,
-        #         reasoning={"effort": "medium"},
-        #         base_url=settings.LLM_BASE_URL
-        #     ),
-        # },
-        # {
-        #     "name": "gpt-5.4-nano",
-        #     "llm": ChatOpenAI(
-        #         model="gpt-5.4-nano",
-        #         api_key=settings.OPENAI_API_KEY,
-        #         max_tokens=settings.MAX_TOKENS,
-        #         reasoning={"effort": "low"},
-        #         base_url=settings.LLM_BASE_URL
-        #     ),
-        # },
-        # {
-        #     "name": "gpt-5",
-        #     "llm": ChatOpenAI(
-        #         model="gpt-5",
-        #         api_key=settings.OPENAI_API_KEY,
-        #         max_tokens=settings.MAX_TOKENS,
-        #         top_p=0.95 if settings.ENVIRONMENT == Environment.PRODUCTION else 0.8,
-        #         presence_penalty=0.1 if settings.ENVIRONMENT == Environment.PRODUCTION else 0.0,
-        #         frequency_penalty=0.1 if settings.ENVIRONMENT == Environment.PRODUCTION else 0.0,
-        #         base_url=settings.LLM_BASE_URL
-        #     ),
-        # },
-    ]
+    LLMS: List[Dict[str, Any]] = []
+
+    @classmethod
+    def _normalize_provider(cls) -> str:
+        provider = (settings.MODEL_PROVIDER or "openai").strip().lower()
+        if provider not in {"openai", "qwen"}:
+            logger.warning("invalid_model_provider_using_openai", model_provider=provider)
+            return "openai"
+        return provider
+
+    @classmethod
+    def _build_model(cls, model_name: str, **kwargs: Any) -> BaseChatModel:
+        """Build a chat model instance for the configured provider."""
+        provider = cls._normalize_provider()
+
+        if provider == "qwen":
+            # The official Qwen integration reads DashScope env vars.
+            # Map existing project settings so qwen/openai can share config.
+            dashscope_key = settings.DASHSCOPE_API_KEY or settings.OPENAI_API_KEY
+            dashscope_base = settings.DASHSCOPE_API_BASE or settings.LLM_BASE_URL
+
+            if dashscope_key and not os.getenv("DASHSCOPE_API_KEY"):
+                os.environ["DASHSCOPE_API_KEY"] = dashscope_key
+            if dashscope_base and not os.getenv("DASHSCOPE_API_BASE"):
+                os.environ["DASHSCOPE_API_BASE"] = dashscope_base
+
+            cleaned_kwargs = dict(kwargs)
+            if "reasoning" in cleaned_kwargs:
+                logger.debug("dropping_unsupported_qwen_kwarg", kwarg="reasoning")
+                cleaned_kwargs.pop("reasoning", None)
+
+            model_kwargs = {
+                "model": model_name,
+                "max_tokens": settings.MAX_TOKENS,
+                "temperature": 0,
+                "max_retries": settings.MAX_LLM_CALL_RETRIES,
+            }
+            model_kwargs.update(cleaned_kwargs)
+            return ChatQwen(**model_kwargs)
+
+        return ChatOpenAI(
+            model=model_name,
+            api_key=settings.OPENAI_API_KEY,
+            base_url=settings.LLM_BASE_URL,
+            max_tokens=settings.MAX_TOKENS,
+            temperature=0,
+            **kwargs,
+        )
+
+    @classmethod
+    def _ensure_initialized(cls) -> None:
+        """Lazily initialize the registry so provider env is respected."""
+        if cls.LLMS:
+            return
+
+        cls.LLMS = [
+            {
+                "name": settings.DEFAULT_LLM_MODEL,
+                "llm": cls._build_model(settings.DEFAULT_LLM_MODEL),
+            }
+        ]
+
+        logger.info(
+            "llm_registry_initialized",
+            model_provider=cls._normalize_provider(),
+            default_model=settings.DEFAULT_LLM_MODEL,
+            base_url=settings.LLM_BASE_URL,
+        )
 
     @classmethod
     def get(cls, model_name: str, **kwargs) -> BaseChatModel:
@@ -86,6 +110,7 @@ class LLMRegistry:
         Raises:
             ValueError: If model_name is not found in LLMS.
         """
+        cls._ensure_initialized()
         model_entry = next((e for e in cls.LLMS if e["name"] == model_name), None)
 
         if not model_entry:
@@ -94,13 +119,7 @@ class LLMRegistry:
 
         if kwargs:
             logger.debug("creating_llm_with_custom_args", model_name=model_name, custom_args=list(kwargs.keys()))
-            return ChatOpenAI(
-                model=model_name,
-                api_key=settings.OPENAI_API_KEY,
-                base_url=settings.LLM_BASE_URL,
-                temperature=0,
-                **kwargs
-            )
+            return cls._build_model(model_name, **kwargs)
 
         logger.debug("using_default_llm_instance", model_name=model_name)
         return model_entry["llm"]
@@ -112,6 +131,7 @@ class LLMRegistry:
         Returns:
             List of model name strings.
         """
+        cls._ensure_initialized()
         return [e["name"] for e in cls.LLMS]
 
     @classmethod
@@ -124,6 +144,7 @@ class LLMRegistry:
         Returns:
             Model entry dict.
         """
+        cls._ensure_initialized()
         if 0 <= index < len(cls.LLMS):
             return cls.LLMS[index]
         return cls.LLMS[0]

@@ -1224,6 +1224,15 @@ wheels = [
 ]
 
 [[package]]
+name = "json-repair"
+version = "0.53.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b6/4e/f92634077c08208df2f7d5999af3288f29bd4348849ba99fdd34f59689f4/json_repair-0.53.1.tar.gz", hash = "sha256:9eacf70954399c49f29c4723e3b899088dab096795b70c061d0421af720b35fa", size = 35947, upload-time = "2025-11-18T11:23:14.437Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1b/52/afc5ba813be79f3d34c4cb88dea63a91c2e403a899168455d2c6e56cadfb/json_repair-0.53.1-py3-none-any.whl", hash = "sha256:6d80d725f747e55373d098f883bd8c48c55c24f80b034458f5cf7e82834c803f", size = 27601, upload-time = "2025-11-18T11:23:13.012Z" },
+]
+
+[[package]]
 name = "json5"
 version = "0.12.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1382,6 +1391,20 @@ wheels = [
 ]
 
 [[package]]
+name = "langchain-qwq"
+version = "0.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "json-repair" },
+    { name = "langchain" },
+    { name = "langchain-openai" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ed/24/20d9893d669509caade821322d5c803257806e1b3f284529e4297c384fd4/langchain_qwq-0.3.1.tar.gz", hash = "sha256:9a620cbe82b667784754798ce7ce19cb3ca506a3142d0862037b86a4f0c3257c", size = 16771, upload-time = "2025-11-29T09:36:28.398Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/95/03/13c78644f1aa23cefef58dc51313cc075d426b7ab1c7cc897f6ce3380eb6/langchain_qwq-0.3.1-py3-none-any.whl", hash = "sha256:afd73d64817e622ba704a223d4451bdb0941e61d4a71d5699432dd7247ad7d04", size = 16007, upload-time = "2025-11-29T09:36:27.16Z" },
+]
+
+[[package]]
 name = "langchain-text-splitters"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1481,6 +1504,7 @@ dependencies = [
     { name = "langchain-community" },
     { name = "langchain-core" },
     { name = "langchain-openai" },
+    { name = "langchain-qwq" },
     { name = "langchain-text-splitters" },
     { name = "langfuse" },
     { name = "langgraph" },
@@ -1559,6 +1583,7 @@ requires-dist = [
     { name = "langchain-community", specifier = ">=0.4.1" },
     { name = "langchain-core", specifier = ">=1.0.4" },
     { name = "langchain-openai", specifier = ">=1.0.2" },
+    { name = "langchain-qwq", specifier = ">=0.3.1" },
     { name = "langchain-text-splitters", specifier = ">=1.0.0" },
     { name = "langfuse", specifier = "==3.9.1" },
     { name = "langgraph", specifier = ">=1.0.2" },

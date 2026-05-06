@@ -53,9 +53,8 @@ async def _persist_session_name(session_id: str, user_message: str) -> None:
                 SystemMessage(content=SESSION_TITLE_PROMPT),
                 HumanMessage(content=user_message[:500]),
             ],
-            model_name="gpt-5.4-nano",
             response_format=SessionTitle,
-            reasoning={"effort": "low"},
+            use_streaming=False,
             max_tokens=32,
             temperature=0.3,
         )

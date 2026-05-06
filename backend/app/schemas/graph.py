@@ -33,6 +33,31 @@ class GraphState(BaseModel):
         default=None,
         description="Short internal reason for classifier decision",
     )
+    needs_clarification: bool = Field(
+        default=False,
+        description="Whether the latest user query needs a clarification turn before final answering",
+    )
+    kb_required: bool = Field(
+        default=False,
+        description="Whether KB retrieval is required for the current query before final answer synthesis",
+    )
+    kb_used: bool = Field(
+        default=False,
+        description="Whether a KB retrieval step was used during this turn",
+    )
+    kb_result_count: int = Field(
+        default=0,
+        ge=0,
+        description="Number of KB results retrieved for the current turn",
+    )
+    kb_context: str = Field(
+        default="",
+        description="Formatted KB retrieval context used for final answer synthesis",
+    )
+    guardrail_status: Literal["clear", "clarification_needed", "rejected", "classifier_failed"] = Field(
+        default="clear",
+        description="Latest guardrail policy status for the turn",
+    )
 
 
 class QueryClassification(BaseModel):
@@ -45,6 +70,15 @@ class QueryClassification(BaseModel):
     is_relevant: bool = Field(
         ...,
         description="True if request is about company products/services",
+    )
+    kb_required: bool = Field(
+        ...,
+        description=(
+            "True only if answering requires retrieving static knowledge base content "
+            "(e.g. product docs, policies, FAQs). "
+            "False when the query can be answered by a tool/API call (e.g. order lookup, account details) "
+            "or from conversation context alone."
+        ),
     )
     confidence: float = Field(
         ...,

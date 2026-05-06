@@ -40,6 +40,7 @@ from app.core.config import (
     Environment,
     settings,
 )
+from app.core.langgraph.policy import evaluate_query_policy
 from app.core.langgraph.tools import tools
 from app.core.logging import logger
 from app.core.metrics import llm_inference_duration_seconds
@@ -54,6 +55,7 @@ from app.schemas import (
     QueryClassification,
 )
 from app.services.database import database_service
+from app.services.knowledge.service import knowledge_service
 from app.services.llm import llm_service
 from app.services.integrations.service import integration_service
 from app.services.integrations.openapi_tools import build_openapi_tools
@@ -133,8 +135,14 @@ class LangGraphAgent:
                     "is_relevant": True,
                     "relevance_confidence": 0.5,
                     "classifier_reason": "no_user_message_found",
+                    "needs_clarification": False,
+                    "kb_required": False,
+                    "kb_used": False,
+                    "kb_result_count": 0,
+                    "kb_context": "",
+                    "guardrail_status": "clear",
                 },
-                goto="chat",
+                goto="retrieve_kb",
             )
 
         try:
@@ -177,7 +185,8 @@ class LangGraphAgent:
                     *recent_messages,
                 ],
                 response_format=QueryClassification,
-                max_tokens=120,
+                use_streaming=False,
+                max_tokens=160,
                 reasoning={"effort": "low"},
             )
 
@@ -186,12 +195,23 @@ class LangGraphAgent:
             if not is_relevant:
                 intent = "irrelevant"
 
+            policy_decision = evaluate_query_policy(
+                intent=intent,
+                is_relevant=is_relevant,
+                confidence=classification.confidence,
+                low_threshold=settings.CLASSIFIER_CONFIDENCE_LOW_THRESHOLD,
+                medium_threshold=settings.CLASSIFIER_CONFIDENCE_MEDIUM_THRESHOLD,
+            )
+
             logger.info(
                 "query_classified",
                 session_id=config["configurable"]["thread_id"],
                 intent=intent,
                 is_relevant=is_relevant,
                 confidence=classification.confidence,
+                needs_clarification=policy_decision.needs_clarification,
+                kb_required=classification.kb_required,
+                guardrail_status=policy_decision.guardrail_status,
             )
 
             return Command(
@@ -200,8 +220,22 @@ class LangGraphAgent:
                     "is_relevant": is_relevant,
                     "relevance_confidence": classification.confidence,
                     "classifier_reason": classification.reason,
+                    "needs_clarification": policy_decision.needs_clarification,
+                    "kb_required": classification.kb_required and bool(is_relevant),
+                    "kb_used": False,
+                    "kb_result_count": 0,
+                    "kb_context": "",
+                    "guardrail_status": policy_decision.guardrail_status,
                 },
-                goto="chat" if is_relevant else "reject",
+                goto=(
+                    "reject"
+                    if policy_decision.route == "reject"
+                    else "clarify_query"
+                    if policy_decision.needs_clarification
+                    else "retrieve_kb"
+                    if classification.kb_required
+                    else "chat"
+                ),
             )
         except Exception as e:
             logger.exception(
@@ -213,11 +247,111 @@ class LangGraphAgent:
             return Command(
                 update={
                     "intent": "support",
-                    "is_relevant": True,
+                    "is_relevant": False,
                     "relevance_confidence": 0.0,
-                    "classifier_reason": "classifier_failed_fail_open",
+                    "classifier_reason": "classifier_failed_safe_fallback",
+                    "needs_clarification": True,
+                    "kb_required": False,
+                    "kb_used": False,
+                    "kb_result_count": 0,
+                    "kb_context": "",
+                    "guardrail_status": "classifier_failed",
+                },
+                goto="safe_fallback",
+            )
+
+    async def _clarify_query(self, state: GraphState) -> Command:
+        """Ask a concise clarification when intent/relevance confidence is low."""
+        del state
+        response_message = AIMessage(
+            content=(
+                "I want to make sure I help accurately. Are you asking about our products, pricing, onboarding, "
+                "or account/support services? If yes, share a little more detail so I can give a precise answer."
+            )
+        )
+        return Command(update={"messages": [response_message]}, goto=END)
+
+    async def _retrieve_kb(self, state: GraphState, config: RunnableConfig) -> Command:
+        """Retrieve company-specific context deterministically before final answer synthesis."""
+        latest_user_query = self._latest_user_message(state.messages)
+        metadata = config.get("metadata", {})
+        workspace_id = metadata.get("workspace_id")
+
+        if not latest_user_query:
+            return Command(
+                update={
+                    "kb_required": True,
+                    "kb_used": True,
+                    "kb_result_count": 0,
+                    "kb_context": "",
                 },
                 goto="chat",
+            )
+
+        if not workspace_id:
+            logger.warning("kb_retrieval_skipped_workspace_missing")
+            return Command(
+                update={
+                    "kb_required": True,
+                    "kb_used": False,
+                    "kb_result_count": 0,
+                    "kb_context": "",
+                },
+                goto="chat",
+            )
+
+        try:
+            async with database_service.async_session_maker() as session:
+                results = await knowledge_service.retrieve_relevant_chunks(
+                    session=session,
+                    workspace_id=int(workspace_id),
+                    query=latest_user_query,
+                    k=4,
+                )
+
+            formatted_results: list[str] = []
+            for index, result in enumerate(results, 1):
+                source = str(result.get("source", "unknown"))
+                text = str(result.get("text", "")).strip()
+                if text:
+                    formatted_results.append(
+                        f"--- Result {index} (Source: {source}) ---\n{text}"
+                    )
+
+            kb_context = "\n\n".join(formatted_results)
+
+            logger.info(
+                "kb_retrieval_completed",
+                session_id=config["configurable"]["thread_id"],
+                workspace_id=workspace_id,
+                result_count=len(formatted_results),
+            )
+
+            return Command(
+                update={
+                    "kb_required": True,
+                    "kb_used": True,
+                    "kb_result_count": len(formatted_results),
+                    "kb_context": kb_context,
+                },
+                goto="chat",
+            )
+        except Exception as e:
+            logger.exception(
+                "kb_retrieval_failed",
+                session_id=config["configurable"]["thread_id"],
+                workspace_id=workspace_id,
+                error=str(e),
+            )
+            return Command(
+                update={
+                    "kb_required": True,
+                    "kb_used": False,
+                    "kb_result_count": 0,
+                    "kb_context": "",
+                    "guardrail_status": "classifier_failed",
+                },
+                goto="safe_fallback",
             )
 
     async def _reject_irrelevant(self, state: GraphState) -> Command:
@@ -227,6 +361,18 @@ class LangGraphAgent:
             content=(
                 "I can only help with topics related to our company's products and services. "
                 "Please share a question about our offerings, pricing, onboarding, account issues, or support needs."
+            )
+        )
+        return Command(update={"messages": [response_message]}, goto=END)
+
+    async def _safe_fallback(self, state: GraphState) -> Command:
+        """Return a safe fallback when classification/tooling fails."""
+        del state
+        response_message = AIMessage(
+            content=(
+                "I could not confidently process that request right now. "
+                "Please ask a company-related question about products, pricing, onboarding, or support, "
+                "and include a bit more detail."
             )
         )
         return Command(update={"messages": [response_message]}, goto=END)
@@ -313,6 +459,17 @@ class LangGraphAgent:
             fallback_rule=fallback_rule
         )
 
+        # Inject deterministic KB retrieval context for in-scope answers.
+        kb_context = (state.kb_context or "").strip()
+        if kb_context:
+            SYSTEM_PROMPT = (
+                f"{SYSTEM_PROMPT}\n\n"
+                "# Retrieved Knowledge Base Context\n"
+                "Use only the context below for company/service factual claims.\n"
+                "If the context is insufficient, say so and ask a concise follow-up question.\n\n"
+                f"{kb_context}"
+            )
+
         # Prepare messages with system prompt
         messages = prepare_messages(state.messages, SYSTEM_PROMPT)
 
@@ -392,53 +549,64 @@ class LangGraphAgent:
         Returns:
             Command: Command object with updated messages and routing back to chat.
         """
-        tool_calls = state.messages[-1].tool_calls
+        try:
+            tool_calls = state.messages[-1].tool_calls
 
-        # Build the combined tools map for this workspace
-        tools_by_name = dict(self.base_tools_by_name)
+            # Build the combined tools map for this workspace
+            tools_by_name = dict(self.base_tools_by_name)
 
-        metadata = config.get("metadata", {})
-        workspace_id = metadata.get("workspace_id")
-        if workspace_id:
-            try:
-                async with database_service.async_session_maker() as db_session:
-                    enabled_ops = await integration_service.get_enabled_operations(
-                        db_session, int(workspace_id)
+            metadata = config.get("metadata", {})
+            workspace_id = metadata.get("workspace_id")
+            if workspace_id:
+                try:
+                    async with database_service.async_session_maker() as db_session:
+                        enabled_ops = await integration_service.get_enabled_operations(
+                            db_session, int(workspace_id)
+                        )
+                    if enabled_ops:
+                        for t in build_openapi_tools(enabled_ops):
+                            tools_by_name[t.name] = t
+                except Exception as e:
+                    logger.error(
+                        "failed_to_load_workspace_tools_in_tool_call",
+                        workspace_id=workspace_id,
+                        error=str(e),
                     )
-                if enabled_ops:
-                    for t in build_openapi_tools(enabled_ops):
-                        tools_by_name[t.name] = t
-            except Exception as e:
-                logger.error(
-                    "failed_to_load_workspace_tools_in_tool_call",
-                    workspace_id=workspace_id,
-                    error=str(e),
-                )
 
-        async def _execute_tool(tool_call: dict) -> ToolMessage:
-            tool_name = tool_call["name"]
-            tool = tools_by_name.get(tool_name)
-            if tool is None:
-                logger.warning("tool_not_found", tool_name=tool_name)
+            async def _execute_tool(tool_call: dict) -> ToolMessage:
+                tool_name = tool_call["name"]
+                tool = tools_by_name.get(tool_name)
+                if tool is None:
+                    logger.warning("tool_not_found", tool_name=tool_name)
+                    return ToolMessage(
+                        content=f"Error: tool '{tool_name}' is not available.",
+                        name=tool_name,
+                        tool_call_id=tool_call["id"],
+                    )
+                tool_result = await tool.ainvoke(tool_call["args"])
                 return ToolMessage(
-                    content=f"Error: tool '{tool_name}' is not available.",
+                    content=tool_result,
                     name=tool_name,
                     tool_call_id=tool_call["id"],
                 )
-            tool_result = await tool.ainvoke(tool_call["args"])
-            return ToolMessage(
-                content=tool_result,
-                name=tool_name,
-                tool_call_id=tool_call["id"],
+
+            # Execute tool calls concurrently when multiple are requested
+            if len(tool_calls) == 1:
+                outputs = [await _execute_tool(tool_calls[0])]
+            else:
+                outputs = list(await asyncio.gather(*[_execute_tool(tc) for tc in tool_calls]))
+
+            return Command(update={"messages": outputs}, goto="chat")
+        except Exception as e:
+            logger.exception(
+                "tool_call_failed",
+                session_id=config["configurable"]["thread_id"],
+                error=str(e),
             )
-
-        # Execute tool calls concurrently when multiple are requested
-        if len(tool_calls) == 1:
-            outputs = [await _execute_tool(tool_calls[0])]
-        else:
-            outputs = list(await asyncio.gather(*[_execute_tool(tc) for tc in tool_calls]))
-
-        return Command(update={"messages": outputs}, goto="chat")
+            return Command(
+                update={"guardrail_status": "classifier_failed"},
+                goto="safe_fallback",
+            )
 
     async def create_graph(self) -> Optional[CompiledStateGraph]:
         """Create and configure the LangGraph workflow.
@@ -449,10 +617,17 @@ class LangGraphAgent:
         if self._graph is None:
             try:
                 graph_builder = StateGraph(GraphState)
-                graph_builder.add_node("classify_query", self._classify_query, ends=["chat", "reject"])
+                graph_builder.add_node(
+                    "classify_query",
+                    self._classify_query,
+                    ends=["clarify_query", "retrieve_kb", "reject", "safe_fallback"],
+                )
+                graph_builder.add_node("clarify_query", self._clarify_query, ends=[END])
+                graph_builder.add_node("retrieve_kb", self._retrieve_kb, ends=["chat", "safe_fallback"])
                 graph_builder.add_node("chat", self._chat, ends=["tool_call", END])
                 graph_builder.add_node("tool_call", self._tool_call, ends=["chat"])
                 graph_builder.add_node("reject", self._reject_irrelevant, ends=[END])
+                graph_builder.add_node("safe_fallback", self._safe_fallback, ends=[END])
                 graph_builder.set_entry_point("classify_query")
 
                 # Get connection pool (may be None in production if DB unavailable)
@@ -609,7 +784,7 @@ class LangGraphAgent:
                 node_name = None
                 if isinstance(metadata, dict):
                     node_name = metadata.get("langgraph_node") or metadata.get("node")
-                if node_name and node_name not in {"chat", "reject"}:
+                if node_name and node_name not in {"chat", "reject", "clarify_query", "safe_fallback"}:
                     continue
 
                 text = extract_text_content(token.content)

@@ -154,7 +154,12 @@ class Settings:
         self.LANGFUSE_HOST = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
 
         # LangGraph Configuration
+        self.MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "openai").strip().lower()
+        if self.MODEL_PROVIDER not in {"openai", "qwen"}:
+            self.MODEL_PROVIDER = "openai"
         self.OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+        self.DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "")
+        self.DASHSCOPE_API_BASE = os.getenv("DASHSCOPE_API_BASE", "")
         self.DEFAULT_LLM_MODEL = os.getenv("DEFAULT_LLM_MODEL", "gpt-5-mini")
         self.SESSION_NAMING_ENABLED = os.getenv("SESSION_NAMING_ENABLED", "true").lower() == "true"
         self.DEFAULT_LLM_TEMPERATURE = float(os.getenv("DEFAULT_LLM_TEMPERATURE", "0.2"))
@@ -162,6 +167,15 @@ class Settings:
         self.MAX_LLM_CALL_RETRIES = int(os.getenv("MAX_LLM_CALL_RETRIES", "3"))
         self.LLM_TOTAL_TIMEOUT = int(os.getenv("LLM_TOTAL_TIMEOUT", "60"))
         self.LLM_BASE_URL = os.getenv("LLM_BASE_URL", "http://host.docker.internal:8080/v1")
+        self.CLASSIFIER_CONFIDENCE_LOW_THRESHOLD = float(
+            os.getenv("CLASSIFIER_CONFIDENCE_LOW_THRESHOLD", "0.45")
+        )
+        self.CLASSIFIER_CONFIDENCE_MEDIUM_THRESHOLD = float(
+            os.getenv("CLASSIFIER_CONFIDENCE_MEDIUM_THRESHOLD", "0.70")
+        )
+        self.CLASSIFIER_CONFIDENCE_HIGH_THRESHOLD = float(
+            os.getenv("CLASSIFIER_CONFIDENCE_HIGH_THRESHOLD", "0.85")
+        )
 
         # Long term memory Configuration
         self.LONG_TERM_MEMORY_MODEL = os.getenv("LONG_TERM_MEMORY_MODEL", "gpt-5-nano")

@@ -27,7 +27,11 @@ cp .env.example .env.development
 
 | Variable | Default | Required | Description |
 | --- | --- | --- | --- |
-| `OPENAI_API_KEY` | — | Yes | OpenAI API key |
+| `MODEL_PROVIDER` | `openai` | No | Model provider: `openai` or `qwen` |
+| `OPENAI_API_KEY` | — | Yes | API key used by configured model provider |
+| `DASHSCOPE_API_KEY` | — | No | Qwen provider key override. If empty, falls back to `OPENAI_API_KEY` |
+| `DASHSCOPE_API_BASE` | — | No | Qwen provider base URL override. If empty, falls back to `LLM_BASE_URL` |
+| `LLM_BASE_URL` | `http://host.docker.internal:8080/v1` | No | Base URL for model provider API |
 | `DEFAULT_LLM_MODEL` | `gpt-5-mini` | No | Starting model — see [LLM Service](llm-service.md) for fallback order |
 | `DEFAULT_LLM_TEMPERATURE` | `0.2` | No | Temperature for chat completions |
 | `MAX_TOKENS` | `2000` | No | Max tokens per LLM response |

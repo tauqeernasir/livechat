@@ -89,6 +89,7 @@ class LLMService:
         messages: List[BaseMessage],
         model_name: Optional[str] = ...,
         response_format: None = ...,
+        use_streaming: Optional[bool] = ...,
         **model_kwargs: Any,
     ) -> BaseMessage: ...
 
@@ -98,6 +99,7 @@ class LLMService:
         messages: List[BaseMessage],
         model_name: Optional[str] = ...,
         response_format: Type[T] = ...,
+        use_streaming: Optional[bool] = ...,
         **model_kwargs: Any,
     ) -> T: ...
 
@@ -106,6 +108,7 @@ class LLMService:
         messages: List[BaseMessage],
         model_name: Optional[str] = None,
         response_format: Optional[Type[BaseModel]] = None,
+        use_streaming: Optional[bool] = None,
         **model_kwargs: Any,
     ) -> Union[BaseMessage, BaseModel]:
         """Call the LLM with retries and circular fallback.
@@ -131,7 +134,7 @@ class LLMService:
         """
         try:
             return await asyncio.wait_for(
-                self._call_with_fallback(messages, model_name, response_format, model_kwargs),
+                self._call_with_fallback(messages, model_name, response_format, use_streaming, model_kwargs),
                 timeout=settings.LLM_TOTAL_TIMEOUT,
             )
         except asyncio.TimeoutError:
@@ -191,7 +194,7 @@ class LLMService:
         def advance(idx: int) -> Optional[int]:
             return (idx + 1) % total
 
-        return await self._fallback_loop(messages, start, get_target, advance)
+        return await self._fallback_loop(messages, start, get_target, advance, True)
 
     def bind_tools(self, tools: List) -> "LLMService":
         """Bind tools to the default LLM instance.
@@ -236,7 +239,7 @@ class LLMService:
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )
-    async def _invoke_with_retry(self, llm: Any, messages: List[BaseMessage]) -> Any:
+    async def _invoke_with_retry(self, llm: Any, messages: List[BaseMessage], use_streaming: bool) -> Any:
         """Invoke an LLM runnable with automatic per-model retry logic.
 
         Args:
@@ -255,8 +258,8 @@ class LLMService:
             # during streaming.
             final_response = None
             text_content = ""
-            
-            if hasattr(llm, "astream"):
+
+            if use_streaming and hasattr(llm, "astream"):
                 try:
                     async for chunk in llm.astream(messages):
                         if final_response is None:
@@ -385,6 +388,7 @@ class LLMService:
         messages: List[BaseMessage],
         model_name: Optional[str],
         response_format: Optional[Type[BaseModel]],
+        use_streaming: Optional[bool],
         model_kwargs: dict,
     ) -> Union[BaseMessage, BaseModel]:
         """Build path-specific strategies and delegate to the shared fallback loop.
@@ -397,6 +401,8 @@ class LLMService:
             ``get_target`` returns ``self._llm`` (tool-bound).
             ``advance`` calls ``_switch_to_next_model`` so bindings persist.
         """
+        streaming_for_call = use_streaming if use_streaming is not None else response_format is None
+
         if model_name or response_format or model_kwargs:
             all_names = LLMRegistry.get_all_names()
             if model_name and model_name not in all_names:
@@ -410,7 +416,7 @@ class LLMService:
 
             def get_target(idx: int) -> Any:
                 base = LLMRegistry.get(LLMRegistry.LLMS[idx]["name"], **model_kwargs)
-                return base.with_structured_output(response_format) if response_format else base
+                return base.with_structured_output(response_format, method="json_mode") if response_format else base
 
             def get_base_target(idx: int) -> Any:
                 return LLMRegistry.get(LLMRegistry.LLMS[idx]["name"], **model_kwargs)
@@ -430,7 +436,7 @@ class LLMService:
                 return self._current_model_index if self._switch_to_next_model() else None
 
         try:
-            result = await self._fallback_loop(messages, start, get_target, advance)
+            result = await self._fallback_loop(messages, start, get_target, advance, streaming_for_call)
         except Exception as e:
             if response_format is None:
                 raise
@@ -441,7 +447,7 @@ class LLMService:
                 schema=response_format.__name__,
                 error=str(e),
             )
-            raw_result = await self._fallback_loop(messages, start, get_base_target, advance)
+            raw_result = await self._fallback_loop(messages, start, get_base_target, advance, streaming_for_call)
             return self._parse_structured_fallback(raw_result, response_format)
 
         if response_format is not None and not isinstance(result, response_format):
@@ -455,6 +461,7 @@ class LLMService:
         start: int,
         get_target: Callable[[int], Any],
         advance: Callable[[int], Optional[int]],
+        use_streaming: bool,
     ) -> Any:
         """Shared fallback loop — try each model in turn until one succeeds.
 
@@ -478,7 +485,7 @@ class LLMService:
         for models_tried in range(1, total + 1):
             current_name = LLMRegistry.LLMS[current]["name"]
             try:
-                return await self._invoke_with_retry(get_target(current), messages)
+                return await self._invoke_with_retry(get_target(current), messages, use_streaming)
             except OpenAIError as e:
                 last_error = e
                 logger.error(
